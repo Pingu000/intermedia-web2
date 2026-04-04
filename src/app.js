@@ -39,8 +39,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
 // ============================================
-// Rutas (Temporales hasta crear user.routes.js)
+// Rutas
 // ============================================
+
+import userRoutes from './routes/user.routes.js';
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -50,7 +52,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// AQUI IREMOS METIENDO LAS RUTAS (Ej: app.use('/api/user', userRoutes))
+app.use('/api/user', userRoutes);
 
 // ============================================
 // Manejo de errores
