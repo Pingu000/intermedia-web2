@@ -8,9 +8,9 @@ const dbConnect = async () => {
     
     // Conectarmos a Mongoose, esto conecta de forma global
     await mongoose.connect(uri);
-    console.log('📦 Conexión a MongoDB Atlas (o local) exitosa');
+    console.log('[Base de Datos] Conexión a MongoDB Atlas (o local) exitosa');
   } catch (error) {
-    console.error('❌ Error conectando a la base de datos', error);
+    console.error('[Base de Datos] Error conectando a la base de datos', error);
     process.exit(1);
   }
 };

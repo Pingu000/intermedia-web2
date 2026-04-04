@@ -11,11 +11,11 @@ const startServer = async () => {
     
     // 2. Si la BD conecta, entonces arrancamos nuestro servidor Express
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor vivito y coleando en el puerto ${PORT}`);
-      console.log(`📚 Puedes probar la API en http://localhost:${PORT}/api/health`);
+      console.log(`[Servidor] Escuchando en el puerto ${PORT}`);
+      console.log(`[Servidor] Puedes probar la API en http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
-    console.error('❌ Error crítico al arrancar la BD, me apago...', error);
+    console.error('[Error] Fallo crítico al arrancar la BD...', error);
     process.exit(1);
   }
 };
