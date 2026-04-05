@@ -1,5 +1,6 @@
 import { User } from '../models/index.js';
 import { AppError } from '../utils/AppError.js';
+import { notificationService } from '../services/notification.service.js';
 
 /**
  * Obtener perfil del usuario actual - GET /api/user
@@ -56,6 +57,42 @@ export const changePassword = async (req, res, next) => {
     await currentUser.save();
 
     res.status(200).json({ message: 'Se ha cambiado la contraseña correctamente.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Borrar cuenta - DELETE /api/user?soft=true|false
+ */
+export const deleteUser = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    // Si req.query.soft existe y es estrictamente igual al texto "true"
+    const isSoftDelete = req.query.soft === 'true';
+
+    const currentUser = await User.findById(userId);
+
+    // Ocultamos la cuenta en vez de borrarla
+    if (isSoftDelete) {
+      currentUser.deleted = true;
+      await currentUser.save();
+    } else {
+      // Borrado definitivo de la BBDD
+      await User.findByIdAndDelete(userId);
+    }
+
+    // Emitimos el evento y le pasamos en los datos si ha sido definitivo o no
+    notificationService.emit('user:deleted', { 
+      email: currentUser.email, 
+      softDelete: isSoftDelete 
+    });
+
+    res.status(200).json({ 
+      message: isSoftDelete 
+        ? 'Cuenta desactivada (Soft Delete)' 
+        : 'Cuenta eliminada permanentemente de la base de datos' 
+    });
   } catch (error) {
     next(error);
   }
