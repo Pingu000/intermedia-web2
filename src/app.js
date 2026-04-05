@@ -9,9 +9,7 @@ import { errorHandler, notFound } from './middleware/error-handler.js';
 
 const app = express();
 
-// ============================================
-// Seguridad (Helmet, Rate Limit, Sanitize) - Requisito T6
-// ============================================
+// SEGURIDAD (HELMET, RATE LIMIT, SANITIZE) - REQUISITO T6
 
 // Helmet nos protege agregando cabeceras HTTP de seguridad
 app.use(helmet());
@@ -27,9 +25,7 @@ app.use('/api', limiter); // Solo limitamos las rutas /api
 // Protección contra inyecciones NoSQL
 app.use(mongoSanitize());
 
-// ============================================
-// Middleware globales
-// ============================================
+// MIDDLEWARE GLOBALES
 
 app.use(cors()); // Para que nuestro frontal pueda consumir la API
 app.use(express.json()); // Para parsear el body en formato JSON
@@ -38,9 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 // Archivos estáticos (para cuando subamos los logos con multer)
 app.use('/uploads', express.static('uploads'));
 
-// ============================================
-// Rutas
-// ============================================
+// RUTAS
 
 import userRoutes from './routes/user.routes.js';
 
@@ -54,9 +48,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/user', userRoutes);
 
-// ============================================
-// Manejo de errores
-// ============================================
+// MANEJO DE ERRORES
 
 // Siempre al final de todo para atrapar lo que las rutas no atraparon
 app.use(notFound);       // Si llega aquí, es que no hizo 'match' con ninguna ruta exitosa

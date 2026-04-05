@@ -19,3 +19,8 @@ export const validationCodeSchema = z.object({
   // El enunciado pedía que el código fuese de 6 dígitos.
   code: z.string().length(6, "El código de validación debe tener exactamente 6 caracteres numéricos")
 });
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "La contraseña actual es obligatoria").trim(),
+  newPassword: z.string().min(8, "La nueva contraseña debe tener al menos 8 caracteres").trim()
+});

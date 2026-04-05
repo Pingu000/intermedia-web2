@@ -7,19 +7,19 @@ import { registerSchema, validationCodeSchema, loginSchema } from '../validators
 
 const router = Router();
 
-// ============================================
-// Rutas Públicas
-// ============================================
+// RUTAS PÚBLICAS
 
 router.post('/register', validateSchema(registerSchema), register);
 router.post('/login', validateSchema(loginSchema), login);
 router.post('/refresh', refresh); // No lleva validateSchema complex porque solo espera "refreshToken"
 
-// ============================================
-// Rutas Privadas (Requieren Token JWT)
-// ============================================
+// RUTAS PRIVADAS (REQUIEREN TOKEN JWT)
+
+import { changePassword } from '../controllers/user.controller.js';
+import { changePasswordSchema } from '../validators/user.validator.js';
 
 router.get('/', requireAuth, getUser);
+router.put('/password', requireAuth, validateSchema(changePasswordSchema), changePassword);
 router.put('/validation', requireAuth, validateSchema(validationCodeSchema), validateEmail);
 router.post('/logout', requireAuth, logout);
 

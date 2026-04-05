@@ -6,9 +6,7 @@ class NotificationService extends EventEmitter {}
 // Exportamos una única instancia (Singleton)
 export const notificationService = new NotificationService();
 
-// ============================================
-// Listeners (Escuchadores de eventos)
-// ============================================
+// LISTENERS (ESCUCHADORES DE EVENTOS)
 
 notificationService.on('user:registered', (data) => {
   console.log(`[EVENTO] Nuevo usuario registrado: ${data.email}`);
