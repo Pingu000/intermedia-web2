@@ -59,6 +59,11 @@ const userSchema = new mongoose.Schema(
     deleted: {
       type: Boolean,
       default: false
+    },
+    // Array para almacenar y gestionar los refresh tokens activos y permitir invalidarlos al hacer logout
+    refreshTokens: {
+      type: [String],
+      default: []
     }
   },
   {

@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
 import { AppError } from '../utils/AppError.js';
 import { generateTokens } from '../utils/token.js';
@@ -84,6 +85,104 @@ export const validateEmail = async (req, res, next) => {
     notificationService.emit('user:verified', { email: currentUser.email });
 
     res.status(200).json({ message: 'Validación completada con éxito. Ya puedes acceder a todas las funciones.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 3) Login - POST /api/user/login
+ */
+export const login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // Buscamos al usuario. Como password suele estar en "select: false" si lo hubiéramos configurado así, por precaución comprobamos directo
+    const currentUser = await User.findOne({ email });
+    if (!currentUser || currentUser.deleted) {
+      throw AppError.unauthorized('Credenciales incorrectas'); // Usamos mensaje genérico por seguridad
+    }
+
+    // Comparamos el hash de bcrypt
+    const isMatch = await bcrypt.compare(password, currentUser.password);
+    if (!isMatch) {
+      throw AppError.unauthorized('Credenciales incorrectas');
+    }
+
+    // Generamos tokens
+    const { accessToken, refreshToken } = generateTokens(currentUser);
+
+    // Guardamos el refresh token activo en la BBDD
+    currentUser.refreshTokens.push(refreshToken);
+    await currentUser.save();
+
+    res.status(200).json({
+      user: {
+        email: currentUser.email,
+        status: currentUser.status,
+        role: currentUser.role
+      },
+      accessToken,
+      refreshToken
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 7) Refresh token - POST /api/user/refresh
+ */
+export const refresh = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      throw AppError.unauthorized('Se requiere el refresh token en el cuerpo de la petición');
+    }
+
+    // Verificamos matemáticamente que el JWT es válido y no expiró
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch (err) {
+      throw AppError.unauthorized('Refresh token caducado o inválido');
+    }
+
+    // Comprobamos que el token realmente esté en la lista de tokens válidos del usuario (por si hizo logout en otro lado)
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser || !currentUser.refreshTokens.includes(refreshToken)) {
+      throw AppError.unauthorized('El token ya fue invalidado o el usuario no existe');
+    }
+
+    // Generamos un nuevo Access Token (y podríamos rotar el refresh, pero devolveremos un nuevo access por ahora)
+    const { accessToken } = generateTokens(currentUser);
+
+    res.status(200).json({ accessToken });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 7) Logout - POST /api/user/logout
+ */
+export const logout = async (req, res, next) => {
+  try {
+    const currentUser = req.user; // Gracias al middleware requireAuth
+    const { refreshToken } = req.body; // El cliente también debería mandarnos cuál es el token que está usando, o vaciamos todos
+    
+    if (refreshToken) {
+      // Borramos ESE refresh token concreto (cerrar sesión en este dispositivo)
+      currentUser.refreshTokens = currentUser.refreshTokens.filter(t => t !== refreshToken);
+    } else {
+      // Si no nos pasan token, cerramos todas sus sesiones en todas partes
+      currentUser.refreshTokens = [];
+    }
+    
+    await currentUser.save();
+    
+    res.status(200).json({ message: 'Sesión cerrada correctamente' });
   } catch (error) {
     next(error);
   }
