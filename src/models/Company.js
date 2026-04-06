@@ -15,8 +15,10 @@ const companySchema = new mongoose.Schema(
     },
     cif: {
       type: String,
-      required: true,
-      unique: true, // El CIF debe ser único para no duplicar empresas
+      // Solo exigimos CIF si se trata de una empresa real y no un autónomo
+      required: function() { return !this.isFreelance; },
+      unique: true, 
+      sparse: true, // Permite tener múltiples valores nulos sin solapar el unique (Requisito isFreelance)
       trim: true
     },
     address: {

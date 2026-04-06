@@ -29,3 +29,16 @@ export const updatePersonalDataSchema = z.object({
   name: z.string().min(1, "El nombre es un campo obligatorio").trim(),
   lastName: z.string().min(1, "Los apellidos son obligatorios").trim()
 });
+
+export const companyOnboardingSchema = z.object({
+  name: z.string().trim().optional(), // Puede ser opcional si es freelance o si se va a unir a una existente
+  cif: z.string().trim().optional(),
+  isFreelance: z.boolean({ required_error: "Debe indicar si es freelance o no" }),
+  address: z.object({
+    street: z.string().optional(),
+    number: z.string().optional(),
+    postal: z.string().optional(),
+    city: z.string().optional(),
+    province: z.string().optional()
+  }).optional()
+});

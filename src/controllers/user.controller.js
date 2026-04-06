@@ -156,3 +156,62 @@ export const inviteUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Onboarding Empresa (Creación o vinculación) - PATCH /api/user/company
+ */
+export const setupCompany = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const { name, cif, isFreelance, address } = req.body;
+    
+    // Necesitamos el modelo Company para crear/buscar
+    const { Company } = await import('../models/index.js');
+    const currentUser = await User.findById(userId);
+
+    let companyAsociada;
+
+    if (isFreelance) {
+      // 1. Lógica para usuario Autónomo
+      companyAsociada = await Company.create({
+        owner: userId,
+        name: `Freelance de ${currentUser.name || currentUser.email}`,
+        isFreelance: true,
+        address: address // Opcional
+      });
+    } else {
+      // 2. Lógica para Empresa tradicional
+      if (!cif) {
+        throw AppError.badRequest('El CIF es obligatorio para crear o unirse a una empresa en modalidad corporativa.');
+      }
+
+      // Buscamos si el CIF ya existe en el sistema
+      companyAsociada = await Company.findOne({ cif, isFreelance: false });
+
+      if (!companyAsociada) {
+        // La empresa no existe, así que la CREAMOS y asignamos a este usuario como 'owner'
+        if (!name) throw AppError.badRequest('Debes indicar el nombre de la empresa al registrarla por primera vez.');
+        
+        companyAsociada = await Company.create({
+          owner: userId,
+          name: name,
+          cif: cif,
+          isFreelance: false,
+          address: address
+        });
+      }
+      // Nota: Si ya existía, simplemente nos 'saltamos' el If y reutilizamos el objeto para anexarnos
+    }
+
+    // Finalmente, en ambos casos, atamos esa empresa al perfil del usuario
+    currentUser.company = companyAsociada._id;
+    await currentUser.save();
+
+    res.status(200).json({
+      user: currentUser,
+      company: companyAsociada
+    });
+  } catch (error) {
+    next(error);
+  }
+};
