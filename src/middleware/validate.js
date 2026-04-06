@@ -10,8 +10,9 @@ export const validateSchema = (schema) => (req, res, next) => {
     req.body = cleanBody;
     next();
   } catch (error) {
-    // Parseamos los errores de Zod para devolverlos en un array amigable
-    const validationErrors = error.errors.map(err => ({
+    // En Zod v4 los errores de validación están en error.issues (antes era error.errors)
+    const issues = error.issues || error.errors || [];
+    const validationErrors = issues.map(err => ({
       campo: err.path.join('.'),
       mensaje: err.message
     }));

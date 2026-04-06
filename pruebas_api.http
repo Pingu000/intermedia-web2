@@ -1,0 +1,115 @@
+@url = http://localhost:3000/api
+
+### =========================================================
+### 0. COMPROBAR SALUD DEL SERVIDOR
+### =========================================================
+GET {{url}}/health
+
+### =========================================================
+### 1. REGISTRO DE USUARIO (Al darle a enviar, mira tu consola)
+### =========================================================
+POST {{url}}/user/register
+Content-Type: application/json
+
+{
+  "email": "test1@empresa.com",
+  "password": "Password123!"
+}
+
+### =========================================================
+### 2. VALIDAR EMAIL
+### Pasos: 
+### 1. Copia el "token" que te devolvió el paso 1.
+### 2. Sustituye la palabra AQUI_TU_TOKEN por tu token pegado.
+### 3. Mira en la consola (terminal) el código de 6 letras que saltó y ponlo en "code".
+### =========================================================
+PUT {{url}}/user/validation
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "code": "123456"
+}
+
+
+### =========================================================
+### 3. LOGIN DE USUARIO
+### =========================================================
+POST {{url}}/user/login
+Content-Type: application/json
+
+{
+  "email": "test1@empresa.com",
+  "password": "Password123!"
+}
+
+### =========================================================
+### 4. VER MI PERFIL
+### (Copia y usa el token que te devuelve el Login)
+### =========================================================
+GET {{url}}/user
+Authorization: Bearer AQUI_TU_TOKEN
+
+
+### =========================================================
+### 5. ONBOARDING: COMPLETAR DATOS PERSONALES
+### =========================================================
+PUT {{url}}/user/register
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Alejandro",
+  "lastName": "Tortuga"
+}
+
+
+### =========================================================
+### 6. ONBOARDING: EMPRESA (Como Autónomo Freelance)
+### =========================================================
+PATCH {{url}}/user/company
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "isFreelance": true,
+  "address": {
+    "city": "Madrid",
+    "street": "Gran Vía"
+  }
+}
+
+### =========================================================
+### 7. SUBIDA DE LOGO (MULTILPART FORM)
+### Nota: Multer funciona enviando archivos binarios reales. 
+### Para este endpoint te recomiendo abrir la pestaña UI normal de ThunderClient,
+### seleccionar Body -> Form-encoded -> File y subir un .png ahí.
+### =========================================================
+
+
+### =========================================================
+### 8. CAMBIAR CONTRASEÑA
+### =========================================================
+PUT {{url}}/user/password
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "AlejandroPasswordSegura1"
+}
+
+
+### =========================================================
+### 9. CERRAR SESIÓN
+### =========================================================
+POST {{url}}/user/logout
+Authorization: Bearer AQUI_TU_TOKEN
+
+
+### =========================================================
+### 10. ELIMINAR CUENTA (Soft Delete)
+### (Ojo: Tras esto no podrás iniciar sesión)
+### =========================================================
+DELETE {{url}}/user?soft=true
+Authorization: Bearer AQUI_TU_TOKEN

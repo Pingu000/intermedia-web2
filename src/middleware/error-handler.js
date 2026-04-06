@@ -2,6 +2,7 @@
 import { AppError } from '../utils/AppError.js';
 
 export const errorHandler = (err, req, res, next) => {
+  console.error('[SERVER ERROR]', err);
   // Por defecto, si no es una instancia de AppError, asumimos internal (500)
   let statusCode = err.statusCode || 500;
   let code = err.code || 'INTERNAL_ERROR';
