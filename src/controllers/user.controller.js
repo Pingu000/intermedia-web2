@@ -97,3 +97,25 @@ export const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Actualizar datos personales (Onboarding) - PUT /api/user/register
+ */
+export const updatePersonalData = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    // Los parsea de forma segura el validador Zod de las rutas
+    const { name, lastName } = req.body;
+
+    // findByIdAndUpdate devuelve el documento y aplicamos 'new: true' para que devuelva la versión recién actualizada (requerimiento)
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { name, lastName },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
