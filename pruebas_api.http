@@ -1,28 +1,30 @@
 @url = http://localhost:3000/api
 
-### =========================================================
-### 0. COMPROBAR SALUD DEL SERVIDOR
-### =========================================================
+# HTTP para probar las peticiones, yo ya lo he probado y me funciona, te lo dejo Ana por si quieres probarlo.
+
+
+# health check para ver si el server esta encendido
 GET {{url}}/health
 
-### =========================================================
-### 1. REGISTRO DE USUARIO (Al darle a enviar, mira tu consola)
-### =========================================================
+###
+
+# registro de usuario nuevo
+# OJO: name y lastName son obligatorios
+# el codigo de verificacion sale en la consola del servidor
 POST {{url}}/user/register
 Content-Type: application/json
 
 {
+  "name": "Alejandro",
+  "lastName": "Garcia",
   "email": "test1@empresa.com",
   "password": "Password123!"
 }
 
-### =========================================================
-### 2. VALIDAR EMAIL
-### Pasos: 
-### 1. Copia el "token" que te devolvió el paso 1.
-### 2. Sustituye la palabra AQUI_TU_TOKEN por tu token pegado.
-### 3. Mira en la consola (terminal) el código de 6 letras que saltó y ponlo en "code".
-### =========================================================
+###
+
+# validar el email con el codigo de 6 digitos que sale en consola
+# hay que poner el accessToken del paso anterior en el header
 PUT {{url}}/user/validation
 Authorization: Bearer AQUI_TU_TOKEN
 Content-Type: application/json
@@ -31,10 +33,9 @@ Content-Type: application/json
   "code": "123456"
 }
 
+###
 
-### =========================================================
-### 3. LOGIN DE USUARIO
-### =========================================================
+# login normal, devuelve accessToken y refreshToken
 POST {{url}}/user/login
 Content-Type: application/json
 
@@ -43,30 +44,27 @@ Content-Type: application/json
   "password": "Password123!"
 }
 
-### =========================================================
-### 4. VER MI PERFIL
-### (Copia y usa el token que te devuelve el Login)
-### =========================================================
+###
+
+# ver perfil del usuario autenticado
 GET {{url}}/user
 Authorization: Bearer AQUI_TU_TOKEN
 
+###
 
-### =========================================================
-### 5. ONBOARDING: COMPLETAR DATOS PERSONALES
-### =========================================================
+# rellenar nombre y apellidos (onboarding paso 1)
 PUT {{url}}/user/register
 Authorization: Bearer AQUI_TU_TOKEN
 Content-Type: application/json
 
 {
   "name": "Alejandro",
-  "lastName": "Tortuga"
+  "lastName": "Garcia"
 }
 
+###
 
-### =========================================================
-### 6. ONBOARDING: EMPRESA (Como Autónomo Freelance)
-### =========================================================
+# asociar empresa - en este caso como freelance
 PATCH {{url}}/user/company
 Authorization: Bearer AQUI_TU_TOKEN
 Content-Type: application/json
@@ -75,41 +73,37 @@ Content-Type: application/json
   "isFreelance": true,
   "address": {
     "city": "Madrid",
-    "street": "Gran Vía"
+    "street": "Gran Via"
   }
 }
 
-### =========================================================
-### 7. SUBIDA DE LOGO (MULTILPART FORM)
-### Nota: Multer funciona enviando archivos binarios reales. 
-### Para este endpoint te recomiendo abrir la pestaña UI normal de ThunderClient,
-### seleccionar Body -> Form-encoded -> File y subir un .png ahí.
-### =========================================================
+###
 
+# subir logo de la empresa
+# este no se puede hacer desde aqui porque es multipart
+# usar Thunder Client UI -> Body -> Form -> campo "logo" -> subir imagen
+# PATCH {{url}}/user/logo
 
-### =========================================================
-### 8. CAMBIAR CONTRASEÑA
-### =========================================================
+###
+
+# cambiar contrasena
 PUT {{url}}/user/password
 Authorization: Bearer AQUI_TU_TOKEN
 Content-Type: application/json
 
 {
   "currentPassword": "Password123!",
-  "newPassword": "AlejandroPasswordSegura1"
+  "newPassword": "NuevaPassword456!"
 }
 
+###
 
-### =========================================================
-### 9. CERRAR SESIÓN
-### =========================================================
+# cerrar sesion (invalida los refresh tokens)
 POST {{url}}/user/logout
 Authorization: Bearer AQUI_TU_TOKEN
 
+###
 
-### =========================================================
-### 10. ELIMINAR CUENTA (Soft Delete)
-### (Ojo: Tras esto no podrás iniciar sesión)
-### =========================================================
+# eliminar cuenta, con ?soft=true la deja como "borrada" pero sin eliminar de la BD
 DELETE {{url}}/user?soft=true
 Authorization: Bearer AQUI_TU_TOKEN

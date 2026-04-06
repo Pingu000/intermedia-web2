@@ -38,6 +38,9 @@ export const register = async (req, res, next) => {
     // Generamos ambos tokens
     const { accessToken, refreshToken } = generateTokens(newUser);
 
+    // Imprimimos el código en consola para poder validar el email en desarrollo (en producción llegaría por email)
+    console.log(`[VALIDACION] Código para ${newUser.email}: ${validationCode}`);
+
     // Lanzamos el evento correspondiente (Requisito de T2)
     notificationService.emit('user:registered', { email: newUser.email });
 
@@ -170,7 +173,7 @@ export const refresh = async (req, res, next) => {
 export const logout = async (req, res, next) => {
   try {
     const currentUser = req.user; // Gracias al middleware requireAuth
-    const { refreshToken } = req.body; // El cliente también debería mandarnos cuál es el token que está usando, o vaciamos todos
+    const refreshToken = req.body?.refreshToken; // Opcional: el cliente puede mandarnos cuál token revocar
     
     if (refreshToken) {
       // Borramos ESE refresh token concreto (cerrar sesión en este dispositivo)
