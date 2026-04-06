@@ -15,14 +15,16 @@ router.post('/refresh', refresh); // No lleva validateSchema complex porque solo
 
 // RUTAS PRIVADAS (REQUIEREN TOKEN JWT)
 
-import { changePassword, deleteUser, updatePersonalData, inviteUsers, setupCompany } from '../controllers/user.controller.js';
+import { changePassword, deleteUser, updatePersonalData, inviteUsers, setupCompany, updateCompanyLogo } from '../controllers/user.controller.js';
 import { changePasswordSchema, updatePersonalDataSchema, companyOnboardingSchema } from '../validators/user.validator.js';
 import { restrictTo } from '../middleware/role.middleware.js';
+import { uploadLogo } from '../middleware/upload.js'; // Importamos el multer nativo
 
 router.get('/', requireAuth, getUser);
 router.delete('/', requireAuth, deleteUser); // El propio frontend es quien pasa el ?soft=true
 router.put('/register', requireAuth, validateSchema(updatePersonalDataSchema), updatePersonalData);
 router.patch('/company', requireAuth, validateSchema(companyOnboardingSchema), setupCompany);
+router.patch('/logo', requireAuth, uploadLogo.single('logo'), updateCompanyLogo); // Procesado de multipart/form-data
 router.post('/invite', requireAuth, restrictTo('admin'), inviteUsers);
 router.put('/password', requireAuth, validateSchema(changePasswordSchema), changePassword);
 router.put('/validation', requireAuth, validateSchema(validationCodeSchema), validateEmail);

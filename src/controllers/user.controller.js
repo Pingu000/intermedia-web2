@@ -215,3 +215,42 @@ export const setupCompany = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Subir logo de empresa - PATCH /api/user/logo
+ */
+export const updateCompanyLogo = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    // Como multer va en la ruta antes que en el controlador, si todo ha ido bien, el archivo ya está en req.file
+    if (!req.file) {
+      throw AppError.badRequest('No has proporcionado ninguna imagen o el campo no se llama "logo".');
+    }
+
+    const { Company } = await import('../models/index.js');
+    const currentUser = await User.findById(userId);
+
+    // Verificamos si realmente pertenece a una empresa antes de cambiar un logo
+    if (!currentUser.company) {
+      throw AppError.badRequest('No perteneces a ninguna empresa actualmente. Únete a una antes de subir un logo.');
+    }
+
+    // Construimos la ruta relativa tal que el frontend pueda consumirla del estático de Express
+    const logoUrl = `/uploads/${req.file.filename}`;
+
+    const updatedCompany = await Company.findByIdAndUpdate(
+      currentUser.company,
+      { logo: logoUrl },
+      { new: true }
+    );
+
+    // Devolvemos el campo logo como exige el enunciado
+    res.status(200).json({ 
+      message: 'Logo de empresa actualizado correctamente',
+      logo: updatedCompany.logo 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
