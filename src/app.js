@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import mongoSanitize from 'express-mongo-sanitize';
+import { manualMongoSanitize } from './middleware/sanitize.js'; // Substituimos el modulo por nuestra implementacion manual
 import { errorHandler, notFound } from './middleware/error-handler.js';
 
 // No importamos routes todavía porque no las hemos creado, lo haremos en un commit posterior.
@@ -22,8 +22,8 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter); // Solo limitamos las rutas /api
 
-// Protección contra inyecciones NoSQL
-app.use(mongoSanitize());
+// Protección contra inyecciones NoSQL usando el sanitizer manual
+app.use(manualMongoSanitize);
 
 // MIDDLEWARE GLOBALES
 
