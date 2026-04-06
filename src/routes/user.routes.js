@@ -15,12 +15,14 @@ router.post('/refresh', refresh); // No lleva validateSchema complex porque solo
 
 // RUTAS PRIVADAS (REQUIEREN TOKEN JWT)
 
-import { changePassword, deleteUser, updatePersonalData } from '../controllers/user.controller.js';
+import { changePassword, deleteUser, updatePersonalData, inviteUsers } from '../controllers/user.controller.js';
 import { changePasswordSchema, updatePersonalDataSchema } from '../validators/user.validator.js';
+import { restrictTo } from '../middleware/role.middleware.js';
 
 router.get('/', requireAuth, getUser);
 router.delete('/', requireAuth, deleteUser); // El propio frontend es quien pasa el ?soft=true
 router.put('/register', requireAuth, validateSchema(updatePersonalDataSchema), updatePersonalData);
+router.post('/invite', requireAuth, restrictTo('admin'), inviteUsers);
 router.put('/password', requireAuth, validateSchema(changePasswordSchema), changePassword);
 router.put('/validation', requireAuth, validateSchema(validationCodeSchema), validateEmail);
 router.post('/logout', requireAuth, logout);

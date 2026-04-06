@@ -119,3 +119,40 @@ export const updatePersonalData = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Invitar a compañeros - POST /api/user/invite?emails=a@test.com,b@test.com
+ */
+export const inviteUsers = async (req, res, next) => {
+  try {
+    const { emails } = req.query;
+    const currentUser = req.user;
+    
+    // Validamos que por lo menos venga la query con algo
+    if (!emails) {
+      throw AppError.badRequest('Debes proporcionar los correos separados por comas (Ej: ?emails=uno@tes.com,dos@test.com)');
+    }
+
+    // Convertimos a array y limpiamos espacios de cada uno
+    const emailList = emails.split(',').map(e => e.trim());
+    const emailsInvitados = [];
+
+    // Por cada email correcto, lanzamos el evento que pide la práctica
+    for (const email of emailList) {
+      if (email) {
+        notificationService.emit('user:invited', {
+          email: email,
+          companyId: currentUser.company || 'Temporal'
+        });
+        emailsInvitados.push(email);
+      }
+    }
+
+    res.status(200).json({ 
+      message: 'Invitaciones enviadas correctamente',
+      invitados: emailsInvitados
+    });
+  } catch (error) {
+    next(error);
+  }
+};
