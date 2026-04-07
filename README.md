@@ -68,3 +68,7 @@ src/
 | `PORT` | Puerto donde corre el servidor (por defecto 3000) |
 | `JWT_SECRET` | Secreto para firmar los access tokens |
 | `JWT_REFRESH_SECRET` | Secreto para firmar los refresh tokens |
+
+## Autor
+
+Alejandro Montero — INSO3A
