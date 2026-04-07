@@ -15,9 +15,9 @@ POST {{url}}/user/register
 Content-Type: application/json
 
 {
-  "name": "Alejandro",
-  "lastName": "Garcia",
-  "email": "test1@empresa.com",
+  "name": "Lelo",
+  "lastName": "Alvarez",
+  "email": "test1@galeote.com",
   "password": "Password123!"
 }
 
