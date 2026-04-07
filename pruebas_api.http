@@ -80,6 +80,14 @@ Content-Type: application/json
 
 ###
 
+# invitar compañeros a la empresa (solo si eres admin y tienes empresa asignada)
+# el servidor crea los usuarios en la BD con role guest
+# puedes poner varios emails separados por comas
+POST {{url}}/user/invite?emails=compañero1@empresa.com,compañero2@empresa.com
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
 # subir logo de la empresa
 # este no se puede hacer desde aqui porque es multipart
 # usar Thunder Client UI -> Body -> Form -> campo "logo" -> subir imagen
