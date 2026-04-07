@@ -6,7 +6,7 @@ export const validateSchema = (schema) => (req, res, next) => {
     // La funcion parse de Zod limpiará y validará nuestro body. Lanza error si algo no cuadra.
     const cleanBody = schema.parse(req.body);
     
-    // Opcional pero recomendado: Sustituir req.body por la versión saneada por Zod (strips unknown keys, transforms a lowercase, etc.)
+    
     req.body = cleanBody;
     next();
   } catch (error) {
