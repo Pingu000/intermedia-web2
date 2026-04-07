@@ -1,6 +1,6 @@
 @url = http://localhost:3000/api
 
-# HTTP para probar las peticiones, yo ya lo he probado y me funciona, te lo dejo Ana por si quieres probarlo.
+# ejemplos de peticiones para probar la API
 
 
 # health check para ver si el server esta encendido
@@ -15,9 +15,9 @@ POST {{url}}/user/register
 Content-Type: application/json
 
 {
-  "name": "Lelo",
-  "lastName": "Alvarez",
-  "email": "test1@galeote.com",
+  "name": "Alejandro",
+  "lastName": "Montero",
+  "email": "ejemplo@ejemplo.com",
   "password": "Password123!"
 }
 
@@ -40,7 +40,7 @@ POST {{url}}/user/login
 Content-Type: application/json
 
 {
-  "email": "test1@empresa.com",
+  "email": "ejemplo@ejemplo.com",
   "password": "Password123!"
 }
 
