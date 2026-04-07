@@ -104,13 +104,11 @@ export const deleteUser = async (req, res, next) => {
 export const updatePersonalData = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    // Los parsea de forma segura el validador Zod de las rutas
-    const { name, lastName } = req.body;
+    const { name, lastName, nif } = req.body;
 
-    // findByIdAndUpdate devuelve el documento y aplicamos 'new: true' para que devuelva la versión recién actualizada (requerimiento)
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { name, lastName },
+      { name, lastName, nif },
       { new: true, runValidators: true }
     );
 
@@ -127,30 +125,50 @@ export const inviteUsers = async (req, res, next) => {
   try {
     const { emails } = req.query;
     const currentUser = req.user;
-    
-    // Validamos que por lo menos venga la query con algo
+
     if (!emails) {
-      throw AppError.badRequest('Debes proporcionar los correos separados por comas (Ej: ?emails=uno@tes.com,dos@test.com)');
+      throw AppError.badRequest('Debes proporcionar los correos separados por comas (Ej: ?emails=uno@test.com,dos@test.com)');
     }
 
-    // Convertimos a array y limpiamos espacios de cada uno
-    const emailList = emails.split(',').map(e => e.trim());
-    const emailsInvitados = [];
+    if (!currentUser.company) {
+      throw AppError.badRequest('Debes pertenecer a una empresa antes de poder invitar a compañeros.');
+    }
 
-    // Por cada email correcto, lanzamos el evento que pide la práctica
+    const bcrypt = (await import('bcryptjs')).default;
+    const emailList = emails.split(',').map(e => e.trim()).filter(Boolean);
+    const usuariosCreados = [];
+
     for (const email of emailList) {
-      if (email) {
-        notificationService.emit('user:invited', {
-          email: email,
-          companyId: currentUser.company || 'Temporal'
-        });
-        emailsInvitados.push(email);
-      }
+      // Comprobamos que no exista ya ese email en la BD
+      const existe = await User.findOne({ email });
+      if (existe) continue;
+
+      // Generamos una contraseña temporal aleatoria para el invitado
+      const passwordTemporal = Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(passwordTemporal, salt);
+
+      const nuevoUsuario = await User.create({
+        email,
+        password: hashedPassword,
+        name: 'Pendiente',
+        lastName: 'Pendiente',
+        role: 'guest', // Los invitados siempre entran como guest
+        company: currentUser.company,
+        verificationCode: Math.floor(100000 + Math.random() * 900000).toString()
+      });
+
+      notificationService.emit('user:invited', {
+        email: nuevoUsuario.email,
+        companyId: currentUser.company
+      });
+
+      usuariosCreados.push(nuevoUsuario.email);
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: 'Invitaciones enviadas correctamente',
-      invitados: emailsInvitados
+      invitados: usuariosCreados
     });
   } catch (error) {
     next(error);
@@ -200,10 +218,11 @@ export const setupCompany = async (req, res, next) => {
           address: address
         });
       }
-      // Nota: Si ya existía, simplemente nos 'saltamos' el If y reutilizamos el objeto para anexarnos
+      // Si ya existía, el usuario se une como 'guest' (no es el dueño)
+      currentUser.role = 'guest';
     }
 
-    // Finalmente, en ambos casos, atamos esa empresa al perfil del usuario
+    // Atamos la empresa al perfil del usuario
     currentUser.company = companyAsociada._id;
     await currentUser.save();
 

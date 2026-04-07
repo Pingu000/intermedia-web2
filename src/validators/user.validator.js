@@ -27,7 +27,8 @@ export const changePasswordSchema = z.object({
 
 export const updatePersonalDataSchema = z.object({
   name: z.string().min(1, "El nombre es un campo obligatorio").trim(),
-  lastName: z.string().min(1, "Los apellidos son obligatorios").trim()
+  lastName: z.string().min(1, "Los apellidos son obligatorios").trim(),
+  nif: z.string().min(1, "El NIF es obligatorio").trim()
 });
 
 export const companyOnboardingSchema = z.object({

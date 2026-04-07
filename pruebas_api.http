@@ -59,7 +59,8 @@ Content-Type: application/json
 
 {
   "name": "Alejandro",
-  "lastName": "Garcia"
+  "lastName": "Garcia",
+  "nif": "12345678A"
 }
 
 ###
