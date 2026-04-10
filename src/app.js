@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { manualMongoSanitize } from './middleware/sanitize.js'; // Substituimos el modulo por nuestra implementacion manual
 import { errorHandler, notFound } from './middleware/error-handler.js';
+import morganBody from 'morgan-body';
+import { loggerStream } from './utils/handleLogger.js';
 
 // No importamos routes todavía porque no las hemos creado, lo haremos en un commit posterior.
 
@@ -30,6 +32,13 @@ app.use(manualMongoSanitize);
 app.use(cors()); // Para que nuestro frontal pueda consumir la API
 app.use(express.json()); // Para parsear el body en formato JSON
 app.use(express.urlencoded({ extended: true }));
+
+// Morgan-body loguea errores HTTP y los manda a Slack via loggerStream
+morganBody(app, {
+  noColors: true,
+  skip: (req, res) => res.statusCode < 400, // solo nos interesan los errores
+  stream: loggerStream
+});
 
 // Archivos estáticos (para cuando subamos los logos con multer)
 app.use('/uploads', express.static('uploads'));
