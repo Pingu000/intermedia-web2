@@ -8,6 +8,18 @@ GET {{url}}/health
 
 ###
 
+# TEST SLACK - login con credenciales incorrectas para forzar un error 401
+# si Slack esta bien configurado, deberia llegarte un mensaje al canal
+POST {{url}}/user/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@ejemplo.com",
+  "password": "contraseñaerronea"
+}
+
+###
+
 # registro de usuario nuevo
 # OJO: name y lastName son obligatorios
 # el codigo de verificacion sale en la consola del servidor
