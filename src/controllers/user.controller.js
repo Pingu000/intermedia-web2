@@ -1,6 +1,7 @@
 import { User } from '../models/index.js';
 import { AppError } from '../utils/AppError.js';
 import { notificationService } from '../services/notification.service.js';
+import { uploadToCloudinary } from '../services/storage.service.js';
 
 /**
  * Obtener perfil del usuario actual - GET /api/user
@@ -255,8 +256,8 @@ export const updateCompanyLogo = async (req, res, next) => {
       throw AppError.badRequest('No perteneces a ninguna empresa actualmente. Únete a una antes de subir un logo.');
     }
 
-    // Construimos la ruta relativa tal que el frontend pueda consumirla del estático de Express
-    const logoUrl = `/uploads/${req.file.filename}`;
+    // Subimos la imagen a Cloudinary y obtenemos la URL publica
+    const logoUrl = await uploadToCloudinary(req.file.path, 'bildyapp/logos');
 
     const updatedCompany = await Company.findByIdAndUpdate(
       currentUser.company,
