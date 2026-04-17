@@ -33,10 +33,10 @@ app.use(cors()); // Para que nuestro frontal pueda consumir la API
 app.use(express.json()); // Para parsear el body en formato JSON
 app.use(express.urlencoded({ extended: true }));
 
-// Morgan-body loguea errores HTTP y los manda a Slack via loggerStream
+// Morgan-body loguea en consola las peticiones que fallan
 morganBody(app, {
   noColors: true,
-  skip: (req, res) => res.statusCode < 400, // solo nos interesan los errores
+  skip: (req, res) => res.statusCode < 500, // solo errores del servidor
   stream: loggerStream
 });
 
