@@ -4,6 +4,7 @@ import { User } from '../models/index.js';
 import { AppError } from '../utils/AppError.js';
 import { generateTokens } from '../utils/token.js';
 import { notificationService } from '../services/notification.service.js';
+import { mailService } from '../services/mail.service.js';
 
 /**
  * 1) Registro de usuario - POST /api/user/register
@@ -40,6 +41,9 @@ export const register = async (req, res, next) => {
 
     // Imprimimos el código en consola para poder validar el email en desarrollo (en producción llegaría por email)
     console.log(`[VALIDACION] Código para ${newUser.email}: ${validationCode}`);
+
+    // Enviamos el correo con el código de validación
+    await mailService.sendValidationCode(newUser.email, validationCode);
 
     // Lanzamos el evento correspondiente (Requisito de T2)
     notificationService.emit('user:registered', { email: newUser.email });

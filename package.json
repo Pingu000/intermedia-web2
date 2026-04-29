@@ -32,6 +32,7 @@
     "mongoose": "^9.4.1",
     "morgan-body": "^2.6.9",
     "multer": "^2.1.1",
+    "nodemailer": "^8.0.7",
     "zod": "^4.3.6"
   }
 }
