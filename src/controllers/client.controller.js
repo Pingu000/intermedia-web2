@@ -41,3 +41,84 @@ export const getClients = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getClientById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const client = await Client.findOne({
+      _id: id,
+      company: req.user.company,
+    });
+
+    if (!client) {
+      throw AppError.notFound('Cliente no encontrado');
+    }
+
+    res.json(client);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateClient = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    const client = await Client.findOneAndUpdate(
+      { _id: id, company: req.user.company, deleted: false },
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!client) {
+      throw AppError.notFound('Cliente no encontrado o eliminado');
+    }
+
+    res.json(client);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteClient = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { hard } = req.query;
+
+    if (hard === 'true') {
+      const client = await Client.findOneAndDelete({ _id: id, company: req.user.company });
+      if (!client) throw AppError.notFound('Cliente no encontrado');
+      return res.status(204).send();
+    }
+
+    // Soft delete
+    const client = await Client.findOneAndUpdate(
+      { _id: id, company: req.user.company, deleted: false },
+      { deleted: true },
+      { new: true }
+    );
+
+    if (!client) throw AppError.notFound('Cliente no encontrado o ya eliminado');
+    
+    res.json(client);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const restoreClient = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const client = await Client.findOneAndUpdate(
+      { _id: id, company: req.user.company, deleted: true },
+      { deleted: false },
+      { new: true }
+    );
+
+    if (!client) throw AppError.notFound('Cliente no encontrado o no estaba eliminado');
+
+    res.json(client);
+  } catch (error) {
+    next(error);
+  }
+};

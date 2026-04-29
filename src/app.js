@@ -46,6 +46,7 @@ app.use('/uploads', express.static('uploads'));
 // RUTAS
 
 import userRoutes from './routes/user.routes.js';
+import clientRoutes from './routes/client.routes.js';
 
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -56,6 +57,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/user', userRoutes);
+app.use('/api/client', clientRoutes);
 
 // MANEJO DE ERRORES
 
