@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
 
 // Configuramos Cloudinary con las credenciales del .env
 cloudinary.config({
@@ -19,14 +20,21 @@ export const uploadToCloudinary = async (filePath, folder = 'bildyapp') => {
 // Sube un buffer en memoria (para cuando usamos multer con memoryStorage)
 export const uploadBufferToCloudinary = (buffer, folder = 'bildyapp', options = {}) => {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: 'auto', ...options },
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { 
+        folder: options.folder || folder, 
+        resource_type: options.resourceType || 'auto', 
+        ...options 
+      },
       (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
+        if (error) reject(error);
+        else resolve(result.secure_url); // Devolvemos directamente la secure_url
       }
     );
-    stream.end(buffer);
+
+    // Convertir buffer a stream y enviarlo (Código de clase)
+    const readableStream = Readable.from(buffer);
+    readableStream.pipe(uploadStream);
   });
 };
 
