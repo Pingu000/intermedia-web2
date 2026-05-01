@@ -39,3 +39,15 @@ export const uploadLogo = multer({
     fileSize: 2 * 1024 * 1024 // 2 Megabytes
   }
 });
+
+// Configuración de almacenamiento en memoria (para subir a Cloudinary mediante streams)
+const memoryStorage = multer.memoryStorage();
+
+export const uploadImageMemory = multer({
+  storage: memoryStorage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2 Megabytes
+  }
+});
+

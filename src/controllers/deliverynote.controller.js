@@ -1,5 +1,6 @@
 import { DeliveryNote, Project, Client } from '../models/index.js';
 import { AppError } from '../utils/AppError.js';
+import { uploadBufferToCloudinary } from '../services/storage.service.js';
 
 export const createDeliveryNote = async (req, res, next) => {
   try {
@@ -81,6 +82,42 @@ export const getDeliveryNoteById = async (req, res, next) => {
     if (!deliveryNote) {
       throw AppError.notFound('Albarán no encontrado');
     }
+
+    res.json(deliveryNote);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const signDeliveryNote = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      throw AppError.badRequest('Debes adjuntar una imagen con la firma');
+    }
+
+    const deliveryNote = await DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+      deleted: false,
+    });
+
+    if (!deliveryNote) {
+      throw AppError.notFound('Albarán no encontrado');
+    }
+
+    if (deliveryNote.status === 'signed') {
+      throw AppError.badRequest('Este albarán ya ha sido firmado');
+    }
+
+    // Subimos la firma a Cloudinary (usando Upload Stream)
+    const signatureUrl = await uploadBufferToCloudinary(req.file.buffer, 'signatures');
+
+    // Actualizamos el documento en base de datos
+    deliveryNote.signature = signatureUrl;
+    deliveryNote.status = 'signed';
+    await deliveryNote.save();
 
     res.json(deliveryNote);
   } catch (error) {
