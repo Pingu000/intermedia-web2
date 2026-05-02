@@ -128,3 +128,89 @@ Authorization: Bearer AQUI_TU_TOKEN
 # eliminar cuenta, con ?soft=true la deja como "borrada" pero sin eliminar de la BD
 DELETE {{url}}/user?soft=true
 Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# ========================================
+# =             CLIENTES                 =
+# ========================================
+
+# Crear un cliente
+POST {{url}}/client
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Cliente de Prueba",
+  "cif": "B12345678",
+  "address": {
+    "street": "Calle Mayor 1",
+    "city": "Madrid",
+    "postalCode": "28001",
+    "province": "Madrid"
+  }
+}
+
+###
+
+# Listar clientes
+GET {{url}}/client
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# ========================================
+# =             PROYECTOS                =
+# ========================================
+
+# Crear un proyecto
+POST {{url}}/project
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Proyecto Reformas",
+  "projectCode": "PRJ-001",
+  "client": "AQUI_ID_DEL_CLIENTE"
+}
+
+###
+
+# Listar proyectos
+GET {{url}}/project
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# ========================================
+# =             ALBARANES                =
+# ========================================
+
+# Crear un albarán (formato horas)
+POST {{url}}/deliverynote
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "client": "AQUI_ID_DEL_CLIENTE",
+  "project": "AQUI_ID_DEL_PROYECTO",
+  "format": "hours",
+  "hours": 5,
+  "description": "Revisión de planos e instalación electrica",
+  "workdate": "2024-05-01T08:00:00Z"
+}
+
+###
+
+# Listar albaranes
+GET {{url}}/deliverynote
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Descargar PDF (Cambiar ID en la URL)
+GET {{url}}/deliverynote/AQUI_ID_ALBARAN/pdf
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
