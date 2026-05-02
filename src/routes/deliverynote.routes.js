@@ -7,7 +7,9 @@ import {
   createDeliveryNote,
   getDeliveryNotes,
   getDeliveryNoteById,
-  signDeliveryNote
+  signDeliveryNote,
+  downloadPdf,
+  deleteDeliveryNote
 } from '../controllers/deliverynote.controller.js';
 
 const router = Router();
@@ -19,5 +21,7 @@ router.post('/', validateSchema(createDeliveryNoteSchema), createDeliveryNote);
 router.get('/', getDeliveryNotes);
 router.get('/:id', getDeliveryNoteById);
 router.patch('/:id/sign', uploadImageMemory.single('signature'), signDeliveryNote);
+router.get('/:id/pdf', downloadPdf);
+router.delete('/:id', deleteDeliveryNote);
 
 export default router;

@@ -1,6 +1,7 @@
 import { DeliveryNote, Project, Client } from '../models/index.js';
 import { AppError } from '../utils/AppError.js';
 import { uploadBufferToCloudinary } from '../services/storage.service.js';
+import { generateBasePDF } from '../services/pdf.service.js';
 
 export const createDeliveryNote = async (req, res, next) => {
   try {
@@ -120,6 +121,81 @@ export const signDeliveryNote = async (req, res, next) => {
     await deliveryNote.save();
 
     res.json(deliveryNote);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadPdf = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const deliveryNote = await DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+      deleted: false,
+    })
+      .populate('client', 'name cif email')
+      .populate('project', 'name projectCode')
+      .populate('user', 'name lastName email');
+
+    if (!deliveryNote) {
+      throw AppError.notFound('Albarán no encontrado');
+    }
+
+    // Preparar el texto del documento
+    const title = `Albarán de Proyecto: ${deliveryNote.project.name}`;
+    let textContent = `Datos del Cliente:\n`;
+    textContent += `- Nombre: ${deliveryNote.client.name}\n`;
+    textContent += `- CIF: ${deliveryNote.client.cif}\n\n`;
+    textContent += `Emitido por (Trabajador): ${deliveryNote.user.name} ${deliveryNote.user.lastName}\n`;
+    textContent += `Fecha de Trabajo: ${new Date(deliveryNote.workdate).toLocaleDateString()}\n\n`;
+    textContent += `Descripción del trabajo realizado:\n${deliveryNote.description}\n\n`;
+    
+    if (deliveryNote.format === 'hours') {
+      textContent += `Formato: Por Horas\nHoras invertidas: ${deliveryNote.hours}\n`;
+    } else {
+      textContent += `Formato: Entrega de Material\nMaterial entregado: ${deliveryNote.material}\n`;
+    }
+
+    if (deliveryNote.status === 'signed') {
+      textContent += `\n[ ESTADO: FIRMADO POR EL CLIENTE ]\n`;
+      // Podríamos incrustar la imagen de la firma si pdfkit lo soporta fácilmente o dejar el log
+    }
+
+    // Generar el PDF usando el servicio base
+    const pdfBuffer = await generateBasePDF(title, textContent);
+
+    // Guardarlo en Cloudinary como respaldo histórico
+    const pdfUrl = await uploadBufferToCloudinary(pdfBuffer, 'pdfs', { resourceType: 'auto' });
+    deliveryNote.pdfUrl = pdfUrl;
+    await deliveryNote.save();
+
+    // Enviarlo directamente al cliente para que el navegador inicie la descarga
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="albaran_${deliveryNote.project.projectCode}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteDeliveryNote = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Borrado lógico
+    const deliveryNote = await DeliveryNote.findOneAndUpdate(
+      { _id: id, company: req.user.company, deleted: false },
+      { deleted: true },
+      { new: true }
+    );
+
+    if (!deliveryNote) {
+      throw AppError.notFound('Albarán no encontrado o ya estaba eliminado');
+    }
+
+    res.json({ message: 'Albarán eliminado correctamente', deliveryNote });
   } catch (error) {
     next(error);
   }
