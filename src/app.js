@@ -58,6 +58,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Endpoint exclusivo para probar la integración con Slack (fuerza un error 500)
+app.get('/api/test-slack', (req, res, next) => {
+  next(new Error('Esto es una prueba de error crítico (500) para comprobar que Slack funciona correctamente.'));
+});
+
 app.use('/api/user', userRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/project', projectRoutes);

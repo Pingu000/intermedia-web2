@@ -8,8 +8,8 @@ GET {{url}}/health
 
 ###
 
-# TEST SLACK - login con credenciales incorrectas para forzar un error 401
-# si Slack esta bien configurado, deberia llegarte un mensaje al canal
+# OJO: Los errores 400 (como este 401 Unauthorized por mala contraseña) NO llegan a Slack.
+# La API es lo suficientemente lista para saber que esto es culpa del cliente y no satura Slack.
 POST {{url}}/user/login
 Content-Type: application/json
 
@@ -17,6 +17,12 @@ Content-Type: application/json
   "email": "noexiste@ejemplo.com",
   "password": "contraseñaerronea"
 }
+
+###
+
+# TEST SLACK REAL - Forzar un error 500 en el servidor
+# Al ejecutar esto, SÍ que te llegará un mensaje al canal de Slack.
+GET {{url}}/test-slack
 
 ###
 
