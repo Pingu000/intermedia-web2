@@ -2,12 +2,12 @@
 
 # ejemplos de peticiones para probar la API
 
-
 # health check para ver si el server esta encendido
 GET {{url}}/health
 
 ###
 
+# TEST SLACK (error 401) 
 # OJO: Los errores 400 (como este 401 Unauthorized por mala contraseña) NO llegan a Slack.
 # La API es lo suficientemente lista para saber que esto es culpa del cliente y no satura Slack.
 POST {{url}}/user/login
@@ -35,7 +35,7 @@ Content-Type: application/json
 {
   "name": "Alejandro",
   "lastName": "Montero",
-  "email": "ejemplo@ejemplo.com",
+  "email": "esun@ejemplo.com",
   "password": "Password123!"
 }
 
@@ -48,7 +48,7 @@ Authorization: Bearer AQUI_TU_TOKEN
 Content-Type: application/json
 
 {
-  "code": "123456"
+  "code": "AQUI_TU_CODIGO_DE_CONSOLA"
 }
 
 ###
@@ -58,7 +58,7 @@ POST {{url}}/user/login
 Content-Type: application/json
 
 {
-  "email": "ejemplo@ejemplo.com",
+  "email": "profe@ejemplo.com",
   "password": "Password123!"
 }
 
@@ -77,7 +77,7 @@ Content-Type: application/json
 
 {
   "name": "Alejandro",
-  "lastName": "Garcia",
+  "lastName": "Montero",
   "nif": "12345678A"
 }
 
@@ -107,9 +107,18 @@ Authorization: Bearer AQUI_TU_TOKEN
 ###
 
 # subir logo de la empresa
-# este no se puede hacer desde aqui porque es multipart
-# usar Thunder Client UI -> Body -> Form -> campo "logo" -> subir imagen
-# PATCH {{url}}/user/logo
+# Nota: La extensión REST Client permite subir archivos usando esta sintaxis de boundaries.
+# Necesitas tener una imagen llamada "logo.png" en la misma carpeta que este archivo.
+PATCH {{url}}/user/logo
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="logo"; filename="logo.png"
+Content-Type: image/png
+
+< ./logo.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
 
@@ -220,3 +229,17 @@ Authorization: Bearer AQUI_TU_TOKEN
 
 ###
 
+# Firmar albarán (Sube la firma a Cloudinary)
+# Necesitas tener una imagen llamada "firma.png" en la misma carpeta que este archivo
+PATCH {{url}}/deliverynote/AQUI_ID_ALBARAN/sign
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="signature"; filename="firma.png"
+Content-Type: image/png
+
+< ./firma.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###

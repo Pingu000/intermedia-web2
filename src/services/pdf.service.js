@@ -5,8 +5,8 @@ import PDFDocument from 'pdfkit';
  * Devuelve una Promesa que resuelve en un Buffer con el contenido del PDF.
  * Este buffer se puede enviar directamente como respuesta HTTP.
  */
-export const generateBasePDF = async (title, textContent) => {
-  return new Promise((resolve, reject) => {
+export const generateBasePDF = async (title, textContent, imageUrl = null) => {
+  return new Promise(async (resolve, reject) => {
     try {
       // Configuramos el documento PDF
       const doc = new PDFDocument({ margin: 50 });
@@ -37,6 +37,24 @@ export const generateBasePDF = async (title, textContent) => {
            align: 'justify',
            lineGap: 5 // Espacio entre líneas
          });
+
+      // Si hay una imagen de firma, la descargamos y la incrustamos
+      if (imageUrl) {
+        try {
+          const response = await fetch(imageUrl);
+          const arrayBuffer = await response.arrayBuffer();
+          const imageBuffer = Buffer.from(arrayBuffer);
+          
+          doc.moveDown(2);
+          doc.text('Firmado:');
+          doc.moveDown(1);
+          // Insertamos la imagen (máximo 200px de ancho)
+          doc.image(imageBuffer, { width: 200 });
+        } catch (imgError) {
+          console.error('Error al incrustar la imagen en el PDF:', imgError);
+          doc.text('(Error al cargar la imagen de la firma)');
+        }
+      }
 
       // Pie de página genérico
       doc.moveDown(4);

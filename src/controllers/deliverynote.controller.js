@@ -158,13 +158,12 @@ export const downloadPdf = async (req, res, next) => {
       textContent += `Formato: Entrega de Material\nMaterial entregado: ${deliveryNote.material}\n`;
     }
 
-    if (deliveryNote.status === 'signed') {
-      textContent += `\n[ ESTADO: FIRMADO POR EL CLIENTE ]\n`;
-      // Podríamos incrustar la imagen de la firma si pdfkit lo soporta fácilmente o dejar el log
+    if (deliveryNote.status !== 'signed') {
+      textContent += `\n[ ESTADO: PENDIENTE DE FIRMA ]\n`;
     }
 
-    // Generar el PDF usando el servicio base
-    const pdfBuffer = await generateBasePDF(title, textContent);
+    // Generar el PDF usando el servicio base, pasándole la imagen de la firma si existe
+    const pdfBuffer = await generateBasePDF(title, textContent, deliveryNote.signature);
 
     // Guardarlo en Cloudinary como respaldo histórico
     const pdfUrl = await uploadBufferToCloudinary(pdfBuffer, 'pdfs', { resourceType: 'auto' });
