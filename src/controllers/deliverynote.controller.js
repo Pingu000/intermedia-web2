@@ -182,19 +182,26 @@ export const downloadPdf = async (req, res, next) => {
 export const deleteDeliveryNote = async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    // Primero buscamos el albarán para verificar si está firmado
+    const existing = await DeliveryNote.findOne({ _id: id, company: req.user.company, deleted: false });
+    if (!existing) {
+      throw AppError.notFound('Albarán no encontrado o ya estaba eliminado');
+    }
+
+    // Un albarán firmado es un documento legal y no puede borrarse
+    if (existing.status === 'signed') {
+      throw AppError.badRequest('No se puede eliminar un albarán firmado. Es un documento legal.');
+    }
     
     // Borrado lógico
-    const deliveryNote = await DeliveryNote.findOneAndUpdate(
-      { _id: id, company: req.user.company, deleted: false },
+    await DeliveryNote.findOneAndUpdate(
+      { _id: id },
       { deleted: true },
       { new: true }
     );
 
-    if (!deliveryNote) {
-      throw AppError.notFound('Albarán no encontrado o ya estaba eliminado');
-    }
-
-    res.json({ message: 'Albarán eliminado correctamente', deliveryNote });
+    res.json({ message: 'Albarán eliminado correctamente' });
   } catch (error) {
     next(error);
   }

@@ -8,7 +8,8 @@ import {
   getClientById,
   updateClient,
   deleteClient,
-  restoreClient
+  restoreClient,
+  getArchivedClients
 } from '../controllers/client.controller.js';
 
 const router = Router();
@@ -72,6 +73,23 @@ router.post('/', validateSchema(createClientSchema), createClient);
  *         description: No autorizado.
  */
 router.get('/', getClients);
+
+/**
+ * @openapi
+ * /api/client/archived:
+ *   get:
+ *     tags:
+ *       - Clients
+ *     summary: Listar clientes archivados (soft deleted)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de clientes archivados.
+ *       401:
+ *         description: No autorizado.
+ */
+router.get('/archived', getArchivedClients);
 
 /**
  * @openapi

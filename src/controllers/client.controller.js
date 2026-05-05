@@ -122,3 +122,20 @@ export const restoreClient = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getArchivedClients = async (req, res, next) => {
+  try {
+    if (!req.user.company) {
+      throw AppError.badRequest('Debes pertenecer a una empresa para listar clientes archivados');
+    }
+
+    const clients = await Client.find({
+      company: req.user.company,
+      deleted: true,
+    });
+
+    res.json(clients);
+  } catch (error) {
+    next(error);
+  }
+};

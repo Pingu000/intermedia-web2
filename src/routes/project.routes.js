@@ -8,7 +8,8 @@ import {
   getProjectById,
   updateProject,
   deleteProject,
-  archiveProject
+  archiveProject,
+  getArchivedProjects
 } from '../controllers/project.controller.js';
 
 const router = Router();
@@ -67,6 +68,23 @@ router.post('/', validateSchema(createProjectSchema), createProject);
  *         description: No autorizado.
  */
 router.get('/', getProjects);
+
+/**
+ * @openapi
+ * /api/project/archived:
+ *   get:
+ *     tags:
+ *       - Projects
+ *     summary: Listar proyectos archivados (soft deleted)
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de proyectos archivados.
+ *       401:
+ *         description: No autorizado.
+ */
+router.get('/archived', getArchivedProjects);
 
 /**
  * @openapi

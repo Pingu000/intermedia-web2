@@ -147,3 +147,20 @@ export const archiveProject = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getArchivedProjects = async (req, res, next) => {
+  try {
+    if (!req.user.company) {
+      throw AppError.badRequest('Debes pertenecer a una empresa para listar proyectos archivados');
+    }
+
+    const projects = await Project.find({
+      company: req.user.company,
+      deleted: true,
+    });
+
+    res.json(projects);
+  } catch (error) {
+    next(error);
+  }
+};

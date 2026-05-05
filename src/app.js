@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import mongoose from 'mongoose';
 import rateLimit from 'express-rate-limit';
 import { manualMongoSanitize } from './middleware/sanitize.js'; // Substituimos el modulo por nuestra implementacion manual
 import { errorHandler, notFound } from './middleware/error-handler.js';
@@ -58,6 +59,8 @@ import deliveryNoteRoutes from './routes/deliverynote.routes.js';
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     message: 'Bienvenido a la API de BildyApp'
   });
