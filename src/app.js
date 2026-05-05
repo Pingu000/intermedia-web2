@@ -6,6 +6,8 @@ import { manualMongoSanitize } from './middleware/sanitize.js'; // Substituimos 
 import { errorHandler, notFound } from './middleware/error-handler.js';
 import morganBody from 'morgan-body';
 import { loggerStream } from './utils/handleLogger.js';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpecs from './docs/swagger.js';
 
 // No importamos routes todavía porque no las hemos creado, lo haremos en un commit posterior.
 
@@ -42,6 +44,9 @@ morganBody(app, {
 
 // Archivos estáticos (para cuando subamos los logos con multer)
 app.use('/uploads', express.static('uploads'));
+
+// Documentación de la API (Swagger)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // RUTAS
 
