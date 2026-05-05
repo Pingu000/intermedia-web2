@@ -67,8 +67,85 @@ router.post('/', validateSchema(createProjectSchema), createProject);
  *         description: No autorizado.
  */
 router.get('/', getProjects);
+
+/**
+ * @openapi
+ * /api/project/{id}:
+ *   get:
+ *     tags:
+ *       - Projects
+ *     summary: Obtener un proyecto por ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Datos del proyecto.
+ *       404:
+ *         description: Proyecto no encontrado.
+ */
 router.get('/:id', getProjectById);
+
+/**
+ * @openapi
+ * /api/project/{id}:
+ *   put:
+ *     tags:
+ *       - Projects
+ *     summary: Actualizar un proyecto
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               projectCode:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Proyecto actualizado correctamente.
+ *       404:
+ *         description: Proyecto no encontrado.
+ */
 router.put('/:id', validateSchema(updateProjectSchema), updateProject);
+
+/**
+ * @openapi
+ * /api/project/{id}:
+ *   delete:
+ *     tags:
+ *       - Projects
+ *     summary: Borrar un proyecto (soft delete por defecto)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Proyecto borrado correctamente.
+ *       404:
+ *         description: Proyecto no encontrado.
+ */
 router.delete('/:id', deleteProject);
 router.patch('/:id/archive', archiveProject);
 

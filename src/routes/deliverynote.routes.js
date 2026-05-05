@@ -79,7 +79,62 @@ router.post('/', validateSchema(createDeliveryNoteSchema), createDeliveryNote);
  *         description: No autorizado.
  */
 router.get('/', getDeliveryNotes);
+
+/**
+ * @openapi
+ * /api/deliverynote/{id}:
+ *   get:
+ *     tags:
+ *       - Delivery Notes
+ *     summary: Obtener un albarán por ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Datos del albarán completo.
+ *       404:
+ *         description: Albarán no encontrado.
+ */
 router.get('/:id', getDeliveryNoteById);
+
+/**
+ * @openapi
+ * /api/deliverynote/{id}/sign:
+ *   patch:
+ *     tags:
+ *       - Delivery Notes
+ *     summary: Firmar un albarán
+ *     description: Sube una imagen de firma y sella el albarán (multipart/form-data)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               signature:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Albarán firmado y guardado correctamente.
+ *       400:
+ *         description: Ya estaba firmado o falta la imagen.
+ */
 router.patch('/:id/sign', uploadImageMemory.single('signature'), signDeliveryNote);
 /**
  * @openapi
@@ -108,6 +163,31 @@ router.patch('/:id/sign', uploadImageMemory.single('signature'), signDeliveryNot
  *         description: Albarán no encontrado.
  */
 router.get('/:id/pdf', downloadPdf);
+
+/**
+ * @openapi
+ * /api/deliverynote/{id}:
+ *   delete:
+ *     tags:
+ *       - Delivery Notes
+ *     summary: Borrar un albarán
+ *     description: Solo se puede borrar si no está firmado
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Albarán borrado correctamente.
+ *       400:
+ *         description: No se puede borrar porque ya está firmado.
+ *       404:
+ *         description: Albarán no encontrado.
+ */
 router.delete('/:id', deleteDeliveryNote);
 
 export default router;

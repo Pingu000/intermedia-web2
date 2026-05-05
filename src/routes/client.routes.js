@@ -72,8 +72,93 @@ router.post('/', validateSchema(createClientSchema), createClient);
  *         description: No autorizado.
  */
 router.get('/', getClients);
+
+/**
+ * @openapi
+ * /api/client/{id}:
+ *   get:
+ *     tags:
+ *       - Clients
+ *     summary: Obtener un cliente por ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Datos del cliente.
+ *       404:
+ *         description: Cliente no encontrado.
+ */
 router.get('/:id', getClientById);
+
+/**
+ * @openapi
+ * /api/client/{id}:
+ *   put:
+ *     tags:
+ *       - Clients
+ *     summary: Actualizar un cliente existente
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               cif:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cliente actualizado correctamente.
+ *       400:
+ *         description: Error de validación.
+ *       404:
+ *         description: Cliente no encontrado.
+ */
 router.put('/:id', validateSchema(updateClientSchema), updateClient);
+
+/**
+ * @openapi
+ * /api/client/{id}:
+ *   delete:
+ *     tags:
+ *       - Clients
+ *     summary: Borrar un cliente (o archivar con soft=true)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: soft
+ *         in: query
+ *         required: false
+ *         schema:
+ *           type: boolean
+ *         description: Si es true, hace borrado lógico en lugar de físico.
+ *     responses:
+ *       200:
+ *         description: Cliente borrado/archivado correctamente.
+ *       404:
+ *         description: Cliente no encontrado.
+ */
 router.delete('/:id', deleteClient); // /api/client/:id?hard=true (para borrado físico)
 router.patch('/:id/restore', restoreClient);
 
