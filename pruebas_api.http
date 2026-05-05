@@ -174,8 +174,44 @@ Authorization: Bearer AQUI_TU_TOKEN
 
 ###
 
+# Obtener un cliente por ID
+GET {{url}}/client/AQUI_ID_DEL_CLIENTE
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Actualizar un cliente
+PUT {{url}}/client/AQUI_ID_DEL_CLIENTE
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Cliente Actualizado",
+  "phone": "600123456"
+}
+
+###
+
+# Archivar un cliente (soft delete: queda en BD marcado como eliminado)
+DELETE {{url}}/client/AQUI_ID_DEL_CLIENTE?soft=true
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Borrar un cliente definitivamente (hard delete: se elimina de la BD)
+DELETE {{url}}/client/AQUI_ID_DEL_CLIENTE
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
 # Listar clientes archivados (soft deleted)
 GET {{url}}/client/archived
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Restaurar un cliente archivado
+PATCH {{url}}/client/AQUI_ID_DEL_CLIENTE/restore
 Authorization: Bearer AQUI_TU_TOKEN
 
 ###
@@ -197,8 +233,49 @@ Content-Type: application/json
 
 ###
 
-# Listar proyectos
+# Listar proyectos (sin filtros)
 GET {{url}}/project
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar proyectos filtrados por nombre (búsqueda parcial)
+GET {{url}}/project?name=Reforma
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar proyectos activos ordenados por fecha de creación descendente
+GET {{url}}/project?active=true&sort=-createdAt
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar proyectos de un cliente concreto
+GET {{url}}/project?client=AQUI_ID_DEL_CLIENTE
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Obtener un proyecto por ID
+GET {{url}}/project/AQUI_ID_DEL_PROYECTO
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Actualizar un proyecto
+PUT {{url}}/project/AQUI_ID_DEL_PROYECTO
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "name": "Proyecto Reformas Actualizado"
+}
+
+###
+
+# Archivar un proyecto (soft delete)
+DELETE {{url}}/project/AQUI_ID_DEL_PROYECTO
 Authorization: Bearer AQUI_TU_TOKEN
 
 ###
@@ -229,8 +306,60 @@ Content-Type: application/json
 
 ###
 
-# Listar albaranes
+# Crear un albarán (formato material)
+POST {{url}}/deliverynote
+Authorization: Bearer AQUI_TU_TOKEN
+Content-Type: application/json
+
+{
+  "client": "AQUI_ID_DEL_CLIENTE",
+  "project": "AQUI_ID_DEL_PROYECTO",
+  "format": "material",
+  "material": "Cemento Portland 25kg",
+  "description": "Entrega de material para cimentación",
+  "workdate": "2024-05-02T08:00:00Z"
+}
+
+###
+
+# Listar albaranes (sin filtros)
 GET {{url}}/deliverynote
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar albaranes de tipo horas
+GET {{url}}/deliverynote?format=hours
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar albaranes firmados
+GET {{url}}/deliverynote?signed=true
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar albaranes pendientes de firma
+GET {{url}}/deliverynote?signed=false
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar albaranes por rango de fechas
+GET {{url}}/deliverynote?from=2024-01-01&to=2024-12-31
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar albaranes de un proyecto, ordenados por fecha de trabajo descendente
+GET {{url}}/deliverynote?project=AQUI_ID_DEL_PROYECTO&sort=-workdate
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Obtener un albarán por ID (con populate de cliente, proyecto y usuario)
+GET {{url}}/deliverynote/AQUI_ID_ALBARAN
 Authorization: Bearer AQUI_TU_TOKEN
 
 ###
@@ -257,7 +386,7 @@ Content-Type: image/png
 ###
 
 # Borrar un albarán (solo funciona si NO está firmado)
-# Si está firmado, devolverá error 400: "Es un documento legal"
+# Si está firmado, devolverá error 400
 DELETE {{url}}/deliverynote/AQUI_ID_ALBARAN
 Authorization: Bearer AQUI_TU_TOKEN
 

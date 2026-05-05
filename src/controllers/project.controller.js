@@ -15,6 +15,12 @@ export const createProject = async (req, res, next) => {
       throw AppError.notFound('Cliente no encontrado o no pertenece a tu empresa');
     }
 
+    // Validar que no exista ya un proyecto con el mismo código dentro de la misma compañía
+    const existingCode = await Project.findOne({ projectCode, company: req.user.company });
+    if (existingCode) {
+      throw AppError.conflict('Ya existe un proyecto con ese código en tu empresa');
+    }
+
     const newProject = await Project.create({
       user: req.user._id,
       company: req.user.company,
@@ -49,9 +55,20 @@ export const getProjects = async (req, res, next) => {
     if (req.query.client) {
       filter.client = req.query.client;
     }
+    // ?name= búsqueda parcial por nombre (case-insensitive)
+    if (req.query.name) {
+      filter.name = { $regex: req.query.name, $options: 'i' };
+    }
+    // ?active=true devuelve proyectos activos; ?active=false los completados
+    if (req.query.active !== undefined) {
+      filter.status = req.query.active === 'true' ? 'active' : 'completed';
+    }
+
+    // Ordenación: ?sort=-createdAt (el - indica descendente)
+    const sort = req.query.sort || '-createdAt';
 
     // Se recomienda poblar el cliente para devolver datos completos
-    const projects = await Project.find(filter).populate('client', 'name cif email');
+    const projects = await Project.find(filter).sort(sort).populate('client', 'name cif email');
 
     res.json(projects);
   } catch (error) {

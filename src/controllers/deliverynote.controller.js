@@ -56,8 +56,24 @@ export const getDeliveryNotes = async (req, res, next) => {
     if (req.query.project) filter.project = req.query.project;
     if (req.query.client) filter.client = req.query.client;
     if (req.query.status) filter.status = req.query.status;
+    // ?format=hours o ?format=material
+    if (req.query.format) filter.format = req.query.format;
+    // ?signed=true filtra los firmados; ?signed=false los pendientes
+    if (req.query.signed !== undefined) {
+      filter.status = req.query.signed === 'true' ? 'signed' : 'pending';
+    }
+    // ?from=2025-01-01&to=2025-12-31 filtra por rango de fecha de trabajo
+    if (req.query.from || req.query.to) {
+      filter.workdate = {};
+      if (req.query.from) filter.workdate.$gte = new Date(req.query.from);
+      if (req.query.to)   filter.workdate.$lte = new Date(req.query.to);
+    }
+
+    // Ordenación: ?sort=-workDate (el - indica descendente), por defecto más reciente primero
+    const sort = req.query.sort || '-workdate';
 
     const deliveryNotes = await DeliveryNote.find(filter)
+      .sort(sort)
       .populate('client', 'name cif email')
       .populate('project', 'name projectCode status');
 

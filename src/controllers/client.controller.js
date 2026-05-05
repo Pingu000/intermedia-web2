@@ -9,6 +9,12 @@ export const createClient = async (req, res, next) => {
 
     const { name, cif, email, phone, address } = req.body;
 
+    // Validar que no exista ya un cliente con el mismo CIF dentro de la misma compañía
+    const existingCif = await Client.findOne({ cif, company: req.user.company });
+    if (existingCif) {
+      throw AppError.conflict('Ya existe un cliente con ese CIF en tu empresa');
+    }
+
     const client = await Client.create({
       user: req.user._id,
       company: req.user.company,
@@ -83,24 +89,23 @@ export const updateClient = async (req, res, next) => {
 export const deleteClient = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { hard } = req.query;
+    const { soft } = req.query;
 
-    if (hard === 'true') {
-      const client = await Client.findOneAndDelete({ _id: id, company: req.user.company });
-      if (!client) throw AppError.notFound('Cliente no encontrado');
-      return res.status(204).send();
+    if (soft === 'true') {
+      // Borrado lógico: marca el cliente como eliminado sin borrarlo de la BD
+      const client = await Client.findOneAndUpdate(
+        { _id: id, company: req.user.company, deleted: false },
+        { deleted: true },
+        { new: true }
+      );
+      if (!client) throw AppError.notFound('Cliente no encontrado o ya eliminado');
+      return res.json(client);
     }
 
-    // Soft delete
-    const client = await Client.findOneAndUpdate(
-      { _id: id, company: req.user.company, deleted: false },
-      { deleted: true },
-      { new: true }
-    );
-
-    if (!client) throw AppError.notFound('Cliente no encontrado o ya eliminado');
-    
-    res.json(client);
+    // Borrado físico por defecto
+    const client = await Client.findOneAndDelete({ _id: id, company: req.user.company });
+    if (!client) throw AppError.notFound('Cliente no encontrado');
+    return res.status(204).send();
   } catch (error) {
     next(error);
   }
