@@ -174,6 +174,12 @@ Authorization: Bearer AQUI_TU_TOKEN
 
 ###
 
+# Listar clientes archivados (soft deleted)
+GET {{url}}/client/archived
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
 # ========================================
 # =             PROYECTOS                =
 # ========================================
@@ -193,6 +199,12 @@ Content-Type: application/json
 
 # Listar proyectos
 GET {{url}}/project
+Authorization: Bearer AQUI_TU_TOKEN
+
+###
+
+# Listar proyectos archivados (soft deleted)
+GET {{url}}/project/archived
 Authorization: Bearer AQUI_TU_TOKEN
 
 ###
@@ -241,5 +253,12 @@ Content-Type: image/png
 
 < ./firma.png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+# Borrar un albarán (solo funciona si NO está firmado)
+# Si está firmado, devolverá error 400: "Es un documento legal"
+DELETE {{url}}/deliverynote/AQUI_ID_ALBARAN
+Authorization: Bearer AQUI_TU_TOKEN
 
 ###
