@@ -35,7 +35,7 @@ Content-Type: application/json
 {
   "name": "Alejandro",
   "lastName": "Montero",
-  "email": "esun@ejemplo.com",
+  "email": "demo@bildyapp.com",
   "password": "Password123!"
 }
 
@@ -58,7 +58,7 @@ POST {{url}}/user/login
 Content-Type: application/json
 
 {
-  "email": "profe@ejemplo.com",
+  "email": "demo@bildyapp.com",
   "password": "Password123!"
 }
 
