@@ -3,53 +3,39 @@ import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
 import rateLimit from 'express-rate-limit';
-import { manualMongoSanitize } from './middleware/sanitize.js'; // Substituimos el modulo por nuestra implementacion manual
+import { manualMongoSanitize } from './middleware/sanitize.js';
 import { errorHandler, notFound } from './middleware/error-handler.js';
 import morganBody from 'morgan-body';
 import { loggerStream } from './utils/handleLogger.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './docs/swagger.js';
 
-// No importamos routes todavía porque no las hemos creado, lo haremos en un commit posterior.
-
 const app = express();
 
-// SEGURIDAD (HELMET, RATE LIMIT, SANITIZE) - REQUISITO T6
-
-// Helmet nos protege agregando cabeceras HTTP de seguridad
 app.use(helmet());
 
-// Rate limit para prevenir ataques de fuerza bruta (ej: 100 peticiones cada 15 min)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Demasiadas peticiones desde esta IP, por favor intente de nuevo en 15 minutos.'
 });
-app.use('/api', limiter); // Solo limitamos las rutas /api
+app.use('/api', limiter);
 
-// Protección contra inyecciones NoSQL usando el sanitizer manual
 app.use(manualMongoSanitize);
 
-// MIDDLEWARE GLOBALES
-
-app.use(cors()); // Para que nuestro frontal pueda consumir la API
-app.use(express.json()); // Para parsear el body en formato JSON
+app.use(cors());
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Morgan-body loguea en consola las peticiones que fallan
 morganBody(app, {
   noColors: true,
-  skip: (req, res) => res.statusCode < 500, // solo errores del servidor
+  skip: (req, res) => res.statusCode < 500,
   stream: loggerStream
 });
 
-// Archivos estáticos (para cuando subamos los logos con multer)
 app.use('/uploads', express.static('uploads'));
 
-// Documentación de la API (Swagger)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-
-// RUTAS
 
 import userRoutes from './routes/user.routes.js';
 import clientRoutes from './routes/client.routes.js';
@@ -57,8 +43,8 @@ import projectRoutes from './routes/project.routes.js';
 import deliveryNoteRoutes from './routes/deliverynote.routes.js';
 
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -66,7 +52,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Endpoint exclusivo para probar la integración con Slack (fuerza un error 500)
 app.get('/api/test-slack', (req, res, next) => {
   next(new Error('Esto es una prueba de error crítico (500) para comprobar que Slack funciona correctamente.'));
 });
@@ -76,10 +61,7 @@ app.use('/api/client', clientRoutes);
 app.use('/api/project', projectRoutes);
 app.use('/api/deliverynote', deliveryNoteRoutes);
 
-// MANEJO DE ERRORES
-
-// Siempre al final de todo para atrapar lo que las rutas no atraparon
-app.use(notFound);       // Si llega aquí, es que no hizo 'match' con ninguna ruta exitosa
-app.use(errorHandler);   // Si alguna ruta hizo throw AppError, cae aquí
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

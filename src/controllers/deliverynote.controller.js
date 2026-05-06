@@ -11,13 +11,11 @@ export const createDeliveryNote = async (req, res, next) => {
 
     const { client, project, format, material, hours, description, workdate } = req.body;
 
-    // Verificar que el proyecto pertenece a la empresa
     const existingProject = await Project.findOne({ _id: project, company: req.user.company, deleted: false });
     if (!existingProject) {
       throw AppError.notFound('El proyecto no existe o no pertenece a tu empresa');
     }
 
-    // Verificar que el cliente pertenece a la empresa
     const existingClient = await Client.findOne({ _id: client, company: req.user.company, deleted: false });
     if (!existingClient) {
       throw AppError.notFound('El cliente no existe o no pertenece a tu empresa');
@@ -52,24 +50,19 @@ export const getDeliveryNotes = async (req, res, next) => {
       deleted: false,
     };
 
-    // Permitimos filtrar por proyecto, cliente o estado desde la URL
     if (req.query.project) filter.project = req.query.project;
     if (req.query.client) filter.client = req.query.client;
     if (req.query.status) filter.status = req.query.status;
-    // ?format=hours o ?format=material
     if (req.query.format) filter.format = req.query.format;
-    // ?signed=true filtra los firmados; ?signed=false los pendientes
     if (req.query.signed !== undefined) {
       filter.status = req.query.signed === 'true' ? 'signed' : 'pending';
     }
-    // ?from=2025-01-01&to=2025-12-31 filtra por rango de fecha de trabajo
     if (req.query.from || req.query.to) {
       filter.workdate = {};
       if (req.query.from) filter.workdate.$gte = new Date(req.query.from);
       if (req.query.to)   filter.workdate.$lte = new Date(req.query.to);
     }
 
-    // Ordenación: ?sort=-workDate (el - indica descendente), por defecto más reciente primero
     const sort = req.query.sort || '-workdate';
 
     const deliveryNotes = await DeliveryNote.find(filter)
@@ -86,7 +79,7 @@ export const getDeliveryNotes = async (req, res, next) => {
 export const getDeliveryNoteById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
+
     const deliveryNote = await DeliveryNote.findOne({
       _id: id,
       company: req.user.company,
@@ -94,7 +87,7 @@ export const getDeliveryNoteById = async (req, res, next) => {
     })
       .populate('client', 'name cif email address')
       .populate('project', 'name projectCode')
-      .populate('user', 'name lastName email'); // El usuario que ha creado el albarán
+      .populate('user', 'name lastName email');
 
     if (!deliveryNote) {
       throw AppError.notFound('Albarán no encontrado');
@@ -128,10 +121,8 @@ export const signDeliveryNote = async (req, res, next) => {
       throw AppError.badRequest('Este albarán ya ha sido firmado');
     }
 
-    // Subimos la firma a Cloudinary (usando Upload Stream)
     const signatureUrl = await uploadBufferToCloudinary(req.file.buffer, 'signatures');
 
-    // Actualizamos el documento en base de datos
     deliveryNote.signature = signatureUrl;
     deliveryNote.status = 'signed';
     await deliveryNote.save();
@@ -159,7 +150,6 @@ export const downloadPdf = async (req, res, next) => {
       throw AppError.notFound('Albarán no encontrado');
     }
 
-    // Preparar el texto del documento
     const title = `Albarán de Proyecto: ${deliveryNote.project.name}`;
     let textContent = `Datos del Cliente:\n`;
     textContent += `- Nombre: ${deliveryNote.client.name}\n`;
@@ -167,7 +157,7 @@ export const downloadPdf = async (req, res, next) => {
     textContent += `Emitido por (Trabajador): ${deliveryNote.user.name} ${deliveryNote.user.lastName}\n`;
     textContent += `Fecha de Trabajo: ${new Date(deliveryNote.workdate).toLocaleDateString()}\n\n`;
     textContent += `Descripción del trabajo realizado:\n${deliveryNote.description}\n\n`;
-    
+
     if (deliveryNote.format === 'hours') {
       textContent += `Formato: Por Horas\nHoras invertidas: ${deliveryNote.hours}\n`;
     } else {
@@ -178,15 +168,12 @@ export const downloadPdf = async (req, res, next) => {
       textContent += `\n[ ESTADO: PENDIENTE DE FIRMA ]\n`;
     }
 
-    // Generar el PDF usando el servicio base, pasándole la imagen de la firma si existe
     const pdfBuffer = await generateBasePDF(title, textContent, deliveryNote.signature);
 
-    // Guardarlo en Cloudinary como respaldo histórico
     const pdfUrl = await uploadBufferToCloudinary(pdfBuffer, 'pdfs', { resourceType: 'auto' });
     deliveryNote.pdfUrl = pdfUrl;
     await deliveryNote.save();
 
-    // Enviarlo directamente al cliente para que el navegador inicie la descarga
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="albaran_${deliveryNote.project.projectCode}.pdf"`);
     res.send(pdfBuffer);
@@ -199,18 +186,15 @@ export const deleteDeliveryNote = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Primero buscamos el albarán para verificar si está firmado
     const existing = await DeliveryNote.findOne({ _id: id, company: req.user.company, deleted: false });
     if (!existing) {
       throw AppError.notFound('Albarán no encontrado o ya estaba eliminado');
     }
 
-    // Un albarán firmado es un documento legal y no puede borrarse
     if (existing.status === 'signed') {
       throw AppError.badRequest('No se puede eliminar un albarán firmado. Es un documento legal.');
     }
-    
-    // Borrado lógico
+
     await DeliveryNote.findOneAndUpdate(
       { _id: id },
       { deleted: true },

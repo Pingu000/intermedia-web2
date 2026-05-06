@@ -9,12 +9,10 @@ export const errorHandler = (err, req, res, next) => {
   let message = err.message || 'Error interno del servidor';
   let details = err.details || undefined;
 
-  // Si es un error 5XX lo mandamos a Slack con todos los detalles que pide el enunciado
   if (statusCode >= 500) {
     sendSlackError(err, req);
   }
 
-  // Manejo de errores propios de Mongoose (como duplicados si nos olvidamos atraparlos en el code)
   if (err.name === 'MongoServerError' && err.code === 11000) {
     statusCode = 409;
     code = 'CONFLICT';
@@ -25,7 +23,7 @@ export const errorHandler = (err, req, res, next) => {
     status: 'error',
     code,
     message,
-    ...(details && { details }) // Solo añade details si existe
+    ...(details && { details })
   });
 };
 

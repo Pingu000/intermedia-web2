@@ -25,7 +25,7 @@ const deliveryNoteSchema = new mongoose.Schema(
     format: {
       type: String,
       enum: ['hours', 'material'],
-      required: true, // Indica si el albarán es por horas de trabajo o por entrega de materiales
+      required: true,
     },
     material: {
       type: String,
@@ -47,13 +47,13 @@ const deliveryNoteSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ['pending', 'signed'],
-      default: 'pending', // Cuando el cliente firma, pasará a 'signed'
+      default: 'pending',
     },
     signature: {
-      type: String, // Aquí guardaremos la URL de la firma subida a Cloudinary
+      type: String,
     },
     pdfUrl: {
-      type: String, // Aquí guardaremos la URL del PDF final
+      type: String,
     },
     deleted: {
       type: Boolean,

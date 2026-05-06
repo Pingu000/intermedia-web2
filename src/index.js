@@ -8,7 +8,7 @@ let server;
 const startServer = async () => {
   try {
     await dbConnect();
-    
+
     server = app.listen(PORT, () => {
       console.log(`[Servidor] Escuchando en el puerto ${PORT}`);
       console.log(`[Servidor] Puedes probar la API en http://localhost:${PORT}/api/health`);
@@ -21,10 +21,9 @@ const startServer = async () => {
 
 startServer();
 
-// --- Apagado controlado (Graceful Shutdown) ---
 const gracefulShutdown = async () => {
   console.log('[Servidor] Apagando el servidor de forma controlada...');
-  
+
   if (server) {
     server.close(async () => {
       console.log('[Servidor] Conexiones HTTP cerradas.');

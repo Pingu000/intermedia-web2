@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-// Esquema de la compañía, tal como lo define la especificación de la práctica
 const companySchema = new mongoose.Schema(
   {
     owner: {
@@ -15,10 +14,9 @@ const companySchema = new mongoose.Schema(
     },
     cif: {
       type: String,
-      // Solo exigimos CIF si se trata de una empresa real y no un autónomo
       required: function() { return !this.isFreelance; },
-      unique: true, 
-      sparse: true, // Permite tener múltiples valores nulos sin solapar el unique (Requisito isFreelance)
+      unique: true,
+      sparse: true,
       trim: true
     },
     address: {
@@ -29,7 +27,7 @@ const companySchema = new mongoose.Schema(
       province: String
     },
     logo: {
-      type: String, // Aquí guardaremos la URL de multer
+      type: String,
       default: null
     },
     isFreelance: {
@@ -42,7 +40,7 @@ const companySchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true // Esto añade automáticamente createdAt y updatedAt (T5)
+    timestamps: true
   }
 );
 

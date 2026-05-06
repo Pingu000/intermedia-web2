@@ -41,11 +41,11 @@ const clientSchema = new mongoose.Schema(
     },
     deleted: {
       type: Boolean,
-      default: false, // Para el borrado lógico (soft delete)
+      default: false,
     },
   },
   {
-    timestamps: true, // Crea automáticamente createdAt y updatedAt
+    timestamps: true,
   }
 );
 

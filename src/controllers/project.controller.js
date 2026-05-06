@@ -9,13 +9,11 @@ export const createProject = async (req, res, next) => {
 
     const { client, name, projectCode, status } = req.body;
 
-    // Verificar que el cliente existe y pertenece a la misma empresa
     const existingClient = await Client.findOne({ _id: client, company: req.user.company, deleted: false });
     if (!existingClient) {
       throw AppError.notFound('Cliente no encontrado o no pertenece a tu empresa');
     }
 
-    // Validar que no exista ya un proyecto con el mismo código dentro de la misma compañía
     const existingCode = await Project.findOne({ projectCode, company: req.user.company });
     if (existingCode) {
       throw AppError.conflict('Ya existe un proyecto con ese código en tu empresa');
@@ -42,32 +40,26 @@ export const getProjects = async (req, res, next) => {
       throw AppError.badRequest('Debes pertenecer a una empresa para listar proyectos');
     }
 
-    // Preparar el filtro base
     const filter = {
       company: req.user.company,
       deleted: false,
     };
 
-    // Aplicar filtros adicionales desde query params si existen
     if (req.query.status) {
       filter.status = req.query.status;
     }
     if (req.query.client) {
       filter.client = req.query.client;
     }
-    // ?name= búsqueda parcial por nombre (case-insensitive)
     if (req.query.name) {
       filter.name = { $regex: req.query.name, $options: 'i' };
     }
-    // ?active=true devuelve proyectos activos; ?active=false los completados
     if (req.query.active !== undefined) {
       filter.status = req.query.active === 'true' ? 'active' : 'completed';
     }
 
-    // Ordenación: ?sort=-createdAt (el - indica descendente)
     const sort = req.query.sort || '-createdAt';
 
-    // Se recomienda poblar el cliente para devolver datos completos
     const projects = await Project.find(filter).sort(sort).populate('client', 'name cif email');
 
     res.json(projects);
@@ -98,8 +90,7 @@ export const getProjectById = async (req, res, next) => {
 export const updateProject = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    // Si se envía el cliente, validar que exista en la empresa
+
     if (req.body.client) {
       const existingClient = await Client.findOne({ _id: req.body.client, company: req.user.company, deleted: false });
       if (!existingClient) {
@@ -126,8 +117,7 @@ export const updateProject = async (req, res, next) => {
 export const deleteProject = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    // Soft delete
+
     const project = await Project.findOneAndUpdate(
       { _id: id, company: req.user.company, deleted: false },
       { deleted: true },
@@ -147,8 +137,7 @@ export const deleteProject = async (req, res, next) => {
 export const archiveProject = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    // Cambiamos el estado a completed (archivado)
+
     const project = await Project.findOneAndUpdate(
       { _id: id, company: req.user.company, deleted: false },
       { status: 'completed' },

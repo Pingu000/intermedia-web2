@@ -1,16 +1,11 @@
 import { EventEmitter } from 'events';
 
-// Implementamos un servicio de notificaciones usando el patrón EventEmitter (T2)
 class NotificationService extends EventEmitter {}
 
-// Exportamos una única instancia (Singleton)
 export const notificationService = new NotificationService();
-
-// LISTENERS (ESCUCHADORES DE EVENTOS)
 
 notificationService.on('user:registered', (data) => {
   console.log(`[EVENTO] Nuevo usuario registrado: ${data.email}`);
-  // En el futuro (final), aquí haríamos fetch a la API de Slack
 });
 
 notificationService.on('user:verified', (data) => {

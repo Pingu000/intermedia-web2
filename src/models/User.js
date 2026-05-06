@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true, // index por defecto
+      unique: true,
       lowercase: true,
       trim: true
     },
@@ -31,13 +31,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['admin', 'guest'],
       default: 'admin',
-      index: true // Index recomendado por el enunciado
+      index: true
     },
     status: {
       type: String,
       enum: ['pending', 'verified'],
       default: 'pending',
-      index: true // Index recomendado para consultas frecuentes
+      index: true
     },
     verificationCode: String,
     verificationAttempts: {
@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema(
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
-      index: true // Index recomendado
+      index: true
     },
     address: {
       street: String,
@@ -60,7 +60,6 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    // Array para almacenar y gestionar los refresh tokens activos y permitir invalidarlos al hacer logout
     refreshTokens: {
       type: [String],
       default: []
@@ -68,12 +67,11 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true }, // Permite que los virtuals aparezcan en la respuesta JSON
+    toJSON: { virtuals: true },
     toObject: { virtuals: true }
   }
 );
 
-// Virtual fullName (no se guarda en DB, se calcula al vuelo como vimos en T5)
 userSchema.virtual('fullName').get(function () {
   return `${this.name} ${this.lastName}`;
 });

@@ -12,11 +12,6 @@ class MailService {
     });
   }
 
-  /**
-   * Envía un email con el código de validación al registrarse
-   * @param {string} to - Email del destinatario
-   * @param {string} code - Código de 6 dígitos
-   */
   async sendValidationCode(to, code) {
     try {
       const mailOptions = {
@@ -35,7 +30,6 @@ class MailService {
       console.log(`[MAIL] Correo enviado a ${to}. MessageId: ${info.messageId}`);
     } catch (error) {
       console.error('[MAIL] Error al enviar correo:', error.message);
-      // No lanzamos el error para no bloquear el registro si falla el correo en desarrollo
     }
   }
 }
