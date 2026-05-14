@@ -134,7 +134,9 @@ router.get('/:id', getDeliveryNoteById);
  *       200:
  *         description: Albarán firmado y guardado correctamente.
  *       400:
- *         description: Ya estaba firmado o falta la imagen.
+ *         description: Falta la imagen de firma.
+ *       409:
+ *         description: El albarán ya ha sido firmado.
  */
 router.patch('/:id/sign', uploadImageMemory.single('signature'), signDeliveryNote);
 /**
@@ -184,8 +186,8 @@ router.get('/:id/pdf', downloadPdf);
  *     responses:
  *       200:
  *         description: Albarán borrado correctamente.
- *       400:
- *         description: No se puede borrar porque ya está firmado.
+ *       409:
+ *         description: No se puede borrar un albarán firmado.
  *       404:
  *         description: Albarán no encontrado.
  */
