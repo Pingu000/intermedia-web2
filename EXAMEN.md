@@ -3,39 +3,43 @@
 ## Reto
 F6 — updateDeliveryNote con control de estado firmado (409 Conflict) + tests
 
-## Tarea técnica
-### Qué problema detecté
-El controlador de albaranes no tenía una función `updateDeliveryNote` que permitiera editar albaranes antes de ser firmados y lo bloqueara después. Además, en `signDeliveryNote` y `deleteDeliveryNote` se usaba `AppError.badRequest` (400) en vez de `AppError.conflict` (409) cuando el albarán ya estaba firmado, lo cual es semánticamente incorrecto porque el problema no es que la petición esté mal formada, sino que hay un conflicto con el estado actual del recurso.
-
-### Cómo lo arreglé
-1. Implementé `updateDeliveryNote` en `src/controllers/deliverynote.controller.js` con un check de `status === 'signed'` que lanza `AppError.conflict` (409) si el albarán ya está firmado, y actualiza los campos permitidos (description, hours, material, workdate) si no lo está.
-2. Registré la ruta `PATCH /api/deliverynote/:id` en `src/routes/deliverynote.routes.js` con validación Zod mediante `updateDeliveryNoteSchema`.
-3. Corregí `signDeliveryNote` y `deleteDeliveryNote` para que usen `AppError.conflict` en lugar de `AppError.badRequest` cuando el albarán ya está firmado.
-4. Creé `tests/deliverynote.test.js` con 4 tests de integración usando `mongodb-memory-server` para un entorno aislado.
-
-### Por qué mi solución es correcta
-La solución respeta la semántica HTTP: un 409 Conflict indica que la petición no puede procesarse debido al estado actual del recurso, no porque los datos enviados sean inválidos. Los tests validan los 4 escenarios clave: actualización exitosa, bloqueo por firma en update, bloqueo por firma en delete, y aislamiento multi-tenant. El uso de `mongodb-memory-server` garantiza que los tests son reproducibles y no dependen de una base de datos externa.
-
 ## Respuestas socráticas
 
-1. Según la RFC 9110, el código 400 (Bad Request) indica que el servidor no puede procesar la petición porque la sintaxis es inválida o los datos enviados son incorrectos. El 409 (Conflict) indica que la petición no se puede completar debido a un conflicto con el estado actual del recurso. Cuando un albarán ya está firmado y alguien intenta editarlo, la petición en sí es válida (sintaxis correcta, datos legítimos), pero el recurso está en un estado que impide la operación. Por tanto, 409 es correcto porque comunica que el problema está en el estado del recurso, no en la petición del cliente.
+### 1. ¿Por qué 400 Bad Request es incorrecto y 409 Conflict es el código semántico correcto?
 
-2. Un `EventEmitter` de Node.js es un mecanismo de comunicación intra-proceso: los eventos se emiten y escuchan dentro del mismo proceso del servidor. Un WebSocket (Socket.IO) es un protocolo de comunicación bidireccional entre el servidor y el navegador del cliente a través de una conexión persistente. Mi `EventEmitter` no puede notificar al navegador en tiempo real porque los listeners están en el propio servidor (solo hacen `console.log`). Para notificar a un usuario en su navegador necesitaría Socket.IO, que mantiene una conexión abierta con el cliente y puede enviarle mensajes push sin que este los solicite.
+La RFC 9110 define el código 400 (Bad Request) como: *"el servidor no puede o no quiere procesar la petición debido a algo que se percibe como un error del cliente (por ejemplo, sintaxis de la petición malformada, datos inválidos en el cuerpo, etc.)"*. En cambio, define el 409 (Conflict) como: *"la petición no se pudo completar debido a un conflicto con el estado actual del recurso destino"*. Cuando alguien intenta firmar un albarán que ya tiene `status: 'signed'`, la petición en sí es perfectamente válida: la sintaxis es correcta, el ID del albarán es real y la imagen de firma adjunta es una imagen legítima. El problema no está en los datos que envió el cliente, sino en que el recurso ya se encuentra en un estado (`signed`) que impide la operación. Por eso el 409 es el código correcto: comunica que el conflicto es con el estado del recurso, no con la petición del cliente. Un 400 sería engañoso porque le diría al frontend que corrija su petición, cuando en realidad no hay nada que corregir en ella.
 
-3. Sin `.skip()` ni `.limit()`, `Client.find()` carga los 10.000 documentos completos en memoria de una sola vez, lo cual puede causar un pico de memoria significativo e incluso un crash por Out-of-Memory. La modificación mínima sería:
+### 2. EventEmitter vs WebSocket: ¿puede mi EventEmitter notificar al navegador?
+
+La diferencia fundamental es el alcance: un `EventEmitter` de Node.js es un mecanismo de comunicación **intra-proceso**, donde los eventos se emiten y escuchan exclusivamente dentro del mismo proceso del servidor. En mi `notification.service.js`, los listeners solo hacen `console.log()`, es decir, los eventos nunca salen del servidor. Un WebSocket con Socket.IO, en cambio, establece una **conexión bidireccional persistente** entre el servidor y el navegador del cliente, permitiendo que el servidor envíe mensajes push sin que el cliente los solicite. Si un usuario abre la aplicación en el navegador y quiero notificarle en tiempo real de que se ha creado un nuevo albarán, mi `EventEmitter` no puede hacerlo porque no tiene ningún canal de comunicación con el navegador: el evento se dispara en el servidor, se imprime en la consola del servidor y muere ahí. Para conseguirlo necesitaría Socket.IO, que al recibir el evento del `EventEmitter` en el servidor, lo reemitiría a través del WebSocket al navegador del usuario conectado.
+
+### 3. Problema de memoria sin paginación y modificación mínima
+
+Sin `.skip()` ni `.limit()`, cuando `getClients` ejecuta `Client.find({ company: req.user.company, deleted: false })` con 10.000 clientes, MongoDB envía todos los documentos al driver de Node.js, que los deserializa uno a uno y los almacena como objetos JavaScript en el heap de V8. Esto provoca un pico de memoria proporcional al tamaño total de los datos: si cada documento ocupa ~2KB, estaríamos cargando ~20MB solo para una petición, y si hay varias peticiones concurrentes el consumo se multiplica, pudiendo provocar lentitud extrema o un crash por Out-of-Memory. La modificación mínima para añadir paginación sería:
+
 ```js
 const page = parseInt(req.query.page) || 1;
 const limit = parseInt(req.query.limit) || 10;
 const skip = (page - 1) * limit;
-const clients = await Client.find({ company: req.user.company, deleted: false }).skip(skip).limit(limit);
+
+const clients = await Client.find({
+  company: req.user.company,
+  deleted: false,
+}).skip(skip).limit(limit);
 ```
 
-4. Sin índice, MongoDB realiza un collection scan (COLLSCAN): examina los 100.000 documentos uno por uno para filtrar por `company` y ordenar por `workdate`. El índice compuesto que añadiría sería `{ company: 1, workdate: -1 }`, en ese orden, porque primero filtramos por `company` (igualdad) y luego ordenamos por `workdate` descendente. MongoDB puede usar este índice para ambas operaciones sin escanear la colección completa, reduciendo el coste de O(n) a O(log n).
+Así cada respuesta devuelve como máximo `limit` documentos, y el cliente puede navegar entre páginas con `?page=2&limit=20`.
 
-5. Devolver 404 es más seguro que 403 en multi-tenancy porque un 403 le confirma al atacante que el recurso existe, solo que no tiene permiso para accederlo. Eso revela información: el atacante sabe que el ID es válido y pertenece a otra empresa, y podría usar esa información para enumerar recursos ajenos. Un 404 es ambiguo: el atacante no sabe si el recurso no existe o si pertenece a otra empresa. Este patrón es una práctica estándar en APIs multi-tenant para evitar la fuga de información sobre la existencia de recursos entre tenants.
+### 4. Índice compuesto para DeliveryNote
 
-## Proceso
-Tiempo total invertido: 45 minutos
-Herramientas usadas: VS Code, Gemini (asistente IA)
-Prompts a IA (si aplica, copia literal):
-- "Estoy ahora mismo en la defensa del examen. La profesora me ha pedido realizar unos retos que tengo que hacer. Algunos creo que ya estan implementados, revisalos para ver si estan bien, tengo que completar todo lo que me pide en el enunciado."
+Sin ningún índice explícito, MongoDB realiza un **collection scan** (COLLSCAN): recorre los 100.000 documentos uno por uno, comprueba cuáles tienen el `company` correcto y luego ordena el resultado por `workdate`. Es decir, examina los **100.000 documentos completos** independientemente de cuántos pertenezcan a esa empresa. El índice compuesto que añadiría sería:
+
+```js
+deliveryNoteSchema.index({ company: 1, workdate: -1 });
+```
+
+El orden importa: primero `company` porque es el campo de **igualdad** (filtramos por un valor exacto), y después `workdate` con `-1` (descendente) porque es el campo de **ordenación**. Con este índice, MongoDB puede ir directamente a la porción del índice correspondiente a esa empresa y recorrer los documentos ya ordenados por fecha, pasando de examinar 100.000 documentos a examinar solo los que pertenecen a esa empresa, con coste O(log n) para la búsqueda.
+
+### 5. ¿Por qué 404 y no 403 en multi-tenancy?
+
+Devolver un 404 en vez de un 403 es una decisión deliberada de seguridad. Si devolviéramos un 403 (Forbidden) cuando el albarán existe pero pertenece a otra compañía, le estaríamos confirmando al atacante que **el recurso con ese ID sí existe** en el sistema, solo que no tiene permiso para accederlo. Esta información es valiosa: un atacante podría iterar sobre IDs (por ejemplo `/api/deliverynote/1`, `/api/deliverynote/2`, etc.) y distinguir entre un 404 (no existe) y un 403 (existe pero es de otro) para construir un mapa de todos los albaranes existentes en la plataforma, saber cuántos hay y potencialmente inferir información sobre otras empresas. Con un 404, la respuesta es ambigua: el atacante no puede distinguir entre "ese albarán no existe" y "ese albarán existe pero es de otra empresa". Este patrón se conoce como **seguridad por ocultación del recurso** y es una práctica estándar en APIs multi-tenant para evitar la enumeración de recursos entre tenants.
