@@ -11,3 +11,12 @@ export const createDeliveryNoteSchema = z.object({
     workdate: z.string({ required_error: 'La fecha de trabajo es obligatoria' }),
   }),
 });
+
+export const updateDeliveryNoteSchema = z.object({
+  body: z.object({
+    description: z.string().min(5, 'La descripción debe tener al menos 5 caracteres').optional(),
+    hours: z.number().min(0, 'Las horas no pueden ser negativas').optional(),
+    material: z.string().optional(),
+    workdate: z.string().optional(),
+  }),
+});

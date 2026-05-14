@@ -2,14 +2,15 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.middleware.js';
 import { validateSchema } from '../middleware/validate.js';
 import { uploadImageMemory } from '../middleware/upload.js';
-import { createDeliveryNoteSchema } from '../validators/deliverynote.validator.js';
+import { createDeliveryNoteSchema, updateDeliveryNoteSchema } from '../validators/deliverynote.validator.js';
 import {
   createDeliveryNote,
   getDeliveryNotes,
   getDeliveryNoteById,
   signDeliveryNote,
   downloadPdf,
-  deleteDeliveryNote
+  deleteDeliveryNote,
+  updateDeliveryNote
 } from '../controllers/deliverynote.controller.js';
 
 const router = Router();
@@ -189,5 +190,46 @@ router.get('/:id/pdf', downloadPdf);
  *         description: Albarán no encontrado.
  */
 router.delete('/:id', deleteDeliveryNote);
+
+/**
+ * @openapi
+ * /api/deliverynote/{id}:
+ *   patch:
+ *     tags:
+ *       - Delivery Notes
+ *     summary: Actualizar un albarán (solo si no está firmado)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *               hours:
+ *                 type: number
+ *               material:
+ *                 type: string
+ *               workdate:
+ *                 type: string
+ *                 format: date-time
+ *     responses:
+ *       200:
+ *         description: Albarán actualizado correctamente.
+ *       409:
+ *         description: No se puede editar un albarán ya firmado.
+ *       404:
+ *         description: Albarán no encontrado.
+ */
+router.patch('/:id', validateSchema(updateDeliveryNoteSchema), updateDeliveryNote);
 
 export default router;

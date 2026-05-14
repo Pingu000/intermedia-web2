@@ -118,7 +118,7 @@ export const signDeliveryNote = async (req, res, next) => {
     }
 
     if (deliveryNote.status === 'signed') {
-      throw AppError.badRequest('Este albarán ya ha sido firmado');
+      throw AppError.conflict('Este albarán ya ha sido firmado');
     }
 
     const signatureUrl = await uploadBufferToCloudinary(req.file.buffer, 'signatures');
@@ -182,6 +182,38 @@ export const downloadPdf = async (req, res, next) => {
   }
 };
 
+export const updateDeliveryNote = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const deliveryNote = await DeliveryNote.findOne({
+      _id: id,
+      company: req.user.company,
+      deleted: false,
+    });
+
+    if (!deliveryNote) {
+      throw AppError.notFound('Albarán no encontrado');
+    }
+
+    if (deliveryNote.status === 'signed') {
+      throw AppError.conflict('No se puede editar un albarán ya firmado');
+    }
+
+    const { description, hours, material, workdate } = req.body;
+    if (description !== undefined) deliveryNote.description = description;
+    if (hours !== undefined) deliveryNote.hours = hours;
+    if (material !== undefined) deliveryNote.material = material;
+    if (workdate !== undefined) deliveryNote.workdate = workdate;
+
+    await deliveryNote.save();
+
+    res.json(deliveryNote);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteDeliveryNote = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -192,7 +224,7 @@ export const deleteDeliveryNote = async (req, res, next) => {
     }
 
     if (existing.status === 'signed') {
-      throw AppError.badRequest('No se puede eliminar un albarán firmado. Es un documento legal.');
+      throw AppError.conflict('No se puede eliminar un albarán firmado. Es un documento legal.');
     }
 
     await DeliveryNote.findOneAndUpdate(
