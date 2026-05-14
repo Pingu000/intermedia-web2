@@ -57,5 +57,5 @@ Devolver un 404 en vez de un 403 es una decisión deliberada de seguridad. Si de
 
 ## Proceso
 Tiempo total invertido en la practica: [Alrededor de 7 dias]
-Herramientas usadas: [VSCode, apunte de case, W3Schools., Herramientas de IA como Claude]
+Herramientas usadas: [VSCode, apunte de case, W3Schools., Herramientas externas]
 
