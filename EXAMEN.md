@@ -3,6 +3,17 @@
 ## Reto
 F6 — updateDeliveryNote con control de estado firmado (409 Conflict) + tests
 
+## Tarea técnica
+
+### Qué problema detecté
+En `src/controllers/deliverynote.controller.js` no existía una función `updateDeliveryNote` que permitiera editar albaranes pendientes y bloqueara la edición de los ya firmados. Además, en `signDeliveryNote` y `deleteDeliveryNote` se usaba `AppError.badRequest` (400) para el check de albarán firmado cuando el código HTTP semánticamente correcto es `AppError.conflict` (409), ya que el problema no es la petición sino el estado del recurso.
+
+### Cómo lo arreglé
+Implementé `updateDeliveryNote` siguiendo el patrón del resto de controladores: busca el albarán filtrando por `_id`, `company` y `deleted: false`, comprueba si `status === 'signed'` y lanza `AppError.conflict(409)` si lo está, y si no actualiza los campos permitidos (`description`, `hours`, `material`, `workdate`). Registré la ruta `PATCH /api/deliverynote/:id` con validación Zod (`updateDeliveryNoteSchema`) en `deliverynote.routes.js`. Corregí `signDeliveryNote` y `deleteDeliveryNote` para que usen `AppError.conflict` en lugar de `AppError.badRequest`. Creé 4 tests de integración con Jest y `mongodb-memory-server`.
+
+### Por qué mi solución es correcta
+La solución respeta la semántica HTTP: 409 Conflict indica un conflicto con el estado del recurso, no un error en la petición. El filtro multi-tenant (`company: req.user.company`) garantiza el aislamiento entre empresas. Los 4 tests validan los escenarios clave: actualización exitosa (200), bloqueo por firma en update (409), bloqueo por firma en delete (409), y aislamiento multi-tenant (404). El uso de `mongodb-memory-server` asegura tests reproducibles sin depender de una base de datos externa.
+
 ## Respuestas socráticas
 
 ### 1. ¿Por qué 400 Bad Request es incorrecto y 409 Conflict es el código semántico correcto?
@@ -43,3 +54,8 @@ El orden importa: primero `company` porque es el campo de **igualdad** (filtramo
 ### 5. ¿Por qué 404 y no 403 en multi-tenancy?
 
 Devolver un 404 en vez de un 403 es una decisión deliberada de seguridad. Si devolviéramos un 403 (Forbidden) cuando el albarán existe pero pertenece a otra compañía, le estaríamos confirmando al atacante que **el recurso con ese ID sí existe** en el sistema, solo que no tiene permiso para accederlo. Esta información es valiosa: un atacante podría iterar sobre IDs (por ejemplo `/api/deliverynote/1`, `/api/deliverynote/2`, etc.) y distinguir entre un 404 (no existe) y un 403 (existe pero es de otro) para construir un mapa de todos los albaranes existentes en la plataforma, saber cuántos hay y potencialmente inferir información sobre otras empresas. Con un 404, la respuesta es ambigua: el atacante no puede distinguir entre "ese albarán no existe" y "ese albarán existe pero es de otra empresa". Este patrón se conoce como **seguridad por ocultación del recurso** y es una práctica estándar en APIs multi-tenant para evitar la enumeración de recursos entre tenants.
+
+## Proceso
+Tiempo total invertido en la practica: [Alrededor de 7 dias]
+Herramientas usadas: [VSCode, apunte de case, W3Schools.]
+
